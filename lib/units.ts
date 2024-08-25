@@ -7,5 +7,5 @@ const weiName = config.chain.currency.weiName || 'wei';
 export const currencyUnits: Record<Unit, string> = {
   wei: weiName,
   gwei: `G${ weiName }`,
-  ether: config.chain.currency.symbol || 'ETH',
+  ether: config.chain.currency.symbol || 'SDA',
 };
