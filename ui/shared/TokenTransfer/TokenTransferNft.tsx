@@ -23,7 +23,7 @@ const TokenTransferNft = ({ hash, id, className, isDisabled, isLoading, truncati
 
   return (
     <Component
-      href={ isDisabled ? undefined : route({ pathname: '/token/[hash]/instance/[id]', query: { hash, id } }) }
+      href={ isDisabled ? undefined : route({ pathname: '/address/[hash]', query: { hash } }) }
       overflow="hidden"
       whiteSpace="nowrap"
       display="flex"

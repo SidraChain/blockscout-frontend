@@ -52,7 +52,6 @@ const SearchResultListItem = ({ data, searchTerm, isLoading }: Props) => {
           <Flex alignItems="center" overflow="hidden">
             <TokenEntity.Icon token={ data } isLoading={ isLoading }/>
             <LinkInternal
-              href={ route({ pathname: '/token/[hash]', query: { hash: data.address } }) }
               fontWeight={ 700 }
               wordBreak="break-all"
               isLoading={ isLoading }

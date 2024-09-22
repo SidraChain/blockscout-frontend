@@ -19,7 +19,7 @@ const AddressActions = ({ isLoading }: Props) => {
   const router = useRouter();
 
   const hash = getQueryParamString(router.query.hash);
-  const isTokenPage = router.pathname === '/token/[hash]';
+  const isTokenPage = router.pathname === '/address/[hash]';
   const isAccountActionAllowed = useIsAccountActionAllowed();
 
   return (

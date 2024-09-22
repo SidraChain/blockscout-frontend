@@ -1,7 +1,7 @@
 import { Box, Icon, Tooltip } from '@chakra-ui/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import type { SocketMessage } from 'lib/socket/types';
 import type { TokenInfo } from 'types/api/token';
@@ -15,7 +15,6 @@ import useApiQuery, { getResourceKey } from 'lib/api/useApiQuery';
 import { useAppContext } from 'lib/contexts/app';
 import useContractTabs from 'lib/hooks/useContractTabs';
 import useIsMobile from 'lib/hooks/useIsMobile';
-import * as metadata from 'lib/metadata';
 import getQueryParamString from 'lib/router/getQueryParamString';
 import useSocketChannel from 'lib/socket/useSocketChannel';
 import useSocketMessage from 'lib/socket/useSocketMessage';
@@ -106,12 +105,6 @@ const TokenPageContent = () => {
     event: 'total_supply',
     handler: handleTotalSupplyMessage,
   });
-
-  useEffect(() => {
-    if (tokenQuery.data && !tokenQuery.isPlaceholderData) {
-      metadata.update({ pathname: '/token/[hash]', query: { hash: tokenQuery.data.address } }, { symbol: tokenQuery.data.symbol ?? '' });
-    }
-  }, [ tokenQuery.data, tokenQuery.isPlaceholderData ]);
 
   const hasData = (tokenQuery.data && !tokenQuery.isPlaceholderData) && (contractQuery.data && !contractQuery.isPlaceholderData);
   const hasInventoryTab = tokenQuery.data?.type === 'ERC-1155' || tokenQuery.data?.type === 'ERC-721';

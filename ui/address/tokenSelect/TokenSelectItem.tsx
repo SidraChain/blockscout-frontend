@@ -2,8 +2,6 @@ import { chakra, Flex, Text, useColorModeValue } from '@chakra-ui/react';
 import BigNumber from 'bignumber.js';
 import React from 'react';
 
-import { route } from 'nextjs-routes';
-
 import TokenEntity from 'ui/shared/entities/token/TokenEntity';
 import TruncatedValue from 'ui/shared/TruncatedValue';
 
@@ -47,9 +45,6 @@ const TokenSelectItem = ({ data }: Props) => {
     }
   })();
 
-  // TODO add filter param when token page is ready
-  const url = route({ pathname: '/token/[hash]', query: { hash: data.token.address } });
-
   return (
     <Flex
       px={ 1 }
@@ -65,7 +60,6 @@ const TokenSelectItem = ({ data }: Props) => {
       fontSize="sm"
       cursor="pointer"
       as="a"
-      href={ url }
     >
       <Flex alignItems="center" w="100%" overflow="hidden">
         <TokenEntity

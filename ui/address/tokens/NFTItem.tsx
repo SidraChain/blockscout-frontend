@@ -3,8 +3,6 @@ import React from 'react';
 
 import type { AddressTokenBalance } from 'types/api/address';
 
-import { route } from 'nextjs-routes';
-
 import TokenEntity from 'ui/shared/entities/token/TokenEntity';
 import NftMedia from 'ui/shared/nft/NftMedia';
 import TruncatedTextTooltip from 'ui/shared/TruncatedTextTooltip';
@@ -12,7 +10,6 @@ import TruncatedTextTooltip from 'ui/shared/TruncatedTextTooltip';
 type Props = AddressTokenBalance & { isLoading: boolean };
 
 const NFTItem = ({ token, token_id: tokenId, token_instance: tokenInstance, isLoading }: Props) => {
-  const tokenLink = route({ pathname: '/token/[hash]', query: { hash: token.address } });
 
   return (
     <LinkBox
@@ -26,7 +23,7 @@ const NFTItem = ({ token, token_id: tokenId, token_instance: tokenInstance, isLo
       fontWeight={ 500 }
       lineHeight="20px"
     >
-      <LinkOverlay href={ isLoading ? undefined : tokenLink }>
+      <LinkOverlay>
         <NftMedia
           mb="18px"
           url={ tokenInstance?.animation_url || tokenInstance?.image_url || null }
@@ -44,7 +41,6 @@ const NFTItem = ({ token, token_id: tokenId, token_instance: tokenInstance, isLo
                 whiteSpace="nowrap"
                 textOverflow="ellipsis"
                 overflow="hidden"
-                href={ route({ pathname: '/token/[hash]/instance/[id]', query: { hash: token.address, id: tokenId } }) }
               >
                 { tokenId }
               </Link>

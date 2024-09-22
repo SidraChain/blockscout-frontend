@@ -9,7 +9,6 @@ import nftIcon from 'icons/nft_shield.svg';
 import useApiQuery from 'lib/api/useApiQuery';
 import { useAppContext } from 'lib/contexts/app';
 import useIsMobile from 'lib/hooks/useIsMobile';
-import * as metadata from 'lib/metadata';
 import * as regexp from 'lib/regexp';
 import { TOKEN_INSTANCE } from 'stubs/token';
 import * as tokenStubs from 'stubs/token';
@@ -73,15 +72,6 @@ const TokenInstanceContent = () => {
       placeholderData: generateListStub<'token_instance_holders'>(tokenStubs.TOKEN_HOLDER, 10, { next_page_params: null }),
     },
   });
-
-  React.useEffect(() => {
-    if (tokenInstanceQuery.data && !tokenInstanceQuery.isPlaceholderData) {
-      metadata.update(
-        { pathname: '/token/[hash]/instance/[id]', query: { hash: tokenInstanceQuery.data.token.address, id: tokenInstanceQuery.data.id } },
-        { symbol: tokenInstanceQuery.data.token.symbol ?? '' },
-      );
-    }
-  }, [ tokenInstanceQuery.data, tokenInstanceQuery.isPlaceholderData ]);
 
   const backLink = React.useMemo(() => {
     const hasGoBackLink = appProps.referrer && appProps.referrer.includes(`/token/${ hash }`) && !appProps.referrer.includes('instance');

@@ -19,7 +19,6 @@ import publicTagIcon from 'icons/publictags.svg';
 import apiDocsIcon from 'icons/restAPI.svg';
 import rpcIcon from 'icons/RPC.svg';
 import statsIcon from 'icons/stats.svg';
-import tokensIcon from 'icons/token.svg';
 import topAccountsIcon from 'icons/top-accounts.svg';
 import transactionsIcon from 'icons/transactions.svg';
 import txnBatchIcon from 'icons/txn_batches.svg';
@@ -138,12 +137,6 @@ export default function useNavItems(): ReturnType {
         icon: globeIcon,
         isActive: blockchainNavItems.flat().some(item => isInternalItem(item) && item.isActive),
         subItems: blockchainNavItems,
-      },
-      {
-        text: 'Tokens',
-        nextRoute: { pathname: '/tokens' as const },
-        icon: tokensIcon,
-        isActive: pathname.startsWith('/token'),
       },
       config.features.marketplace.isEnabled ? {
         text: 'Apps',

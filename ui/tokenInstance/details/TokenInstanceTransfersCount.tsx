@@ -1,8 +1,6 @@
 import { Skeleton } from '@chakra-ui/react';
 import React from 'react';
 
-import { route } from 'nextjs-routes';
-
 import useApiQuery from 'lib/api/useApiQuery';
 import DetailsInfoItem from 'ui/shared/DetailsInfoItem';
 import LinkInternal from 'ui/shared/LinkInternal';
@@ -32,10 +30,6 @@ const TokenInstanceTransfersCount = ({ hash, id, onClick }: Props) => {
     return null;
   }
 
-  const url = transfersCountQuery.data.transfers_count > 0 ?
-    route({ pathname: '/token/[hash]/instance/[id]', query: { hash, id, tab: 'token_transfers' } }) :
-    undefined;
-
   return (
     <DetailsInfoItem
       title="Transfers"
@@ -44,7 +38,6 @@ const TokenInstanceTransfersCount = ({ hash, id, onClick }: Props) => {
     >
       <Skeleton isLoaded={ !transfersCountQuery.isPlaceholderData } display="inline-block">
         <LinkInternal
-          href={ url }
           onClick={ transfersCountQuery.data.transfers_count > 0 ? onClick : undefined }
         >
           { transfersCountQuery.data.transfers_count.toLocaleString() }

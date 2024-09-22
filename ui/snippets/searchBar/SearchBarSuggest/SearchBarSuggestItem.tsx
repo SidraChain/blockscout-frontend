@@ -25,7 +25,7 @@ const SearchBarSuggestItem = ({ data, isMobile, searchTerm, onClick }: Props) =>
   const url = (() => {
     switch (data.type) {
       case 'token': {
-        return route({ pathname: '/token/[hash]', query: { hash: data.address } });
+        return route({ pathname: '/address/[hash]', query: { hash: data.address } });
       }
       case 'contract':
       case 'address':

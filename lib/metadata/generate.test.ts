@@ -24,14 +24,6 @@ const TEST_CASES: Array<TestCase<Route>> = [
       query: { hash: '0x12345' },
     },
   },
-  {
-    title: 'dynamic route with API data',
-    route: {
-      pathname: '/token/[hash]',
-      query: { hash: '0x12345' },
-    },
-    apiData: { symbol: 'USDT' },
-  } as TestCase<{ pathname: '/token/[hash]'; query: { hash: string }}>,
 ];
 
 describe('generates correct metadata for:', () => {

@@ -1,5 +1,4 @@
-import { Flex, Text, LinkBox, LinkOverlay, useColorModeValue, Skeleton } from '@chakra-ui/react';
-import NextLink from 'next/link';
+import { Flex, Text, LinkBox, useColorModeValue, Skeleton } from '@chakra-ui/react';
 import React from 'react';
 
 import type { TokenInstance } from 'types/api/token';
@@ -36,17 +35,7 @@ const NFTItem = ({ item, isLoading }: Props) => {
       fontWeight={ 500 }
       lineHeight="20px"
     >
-      { isLoading ? mediaElement : (
-        <NextLink
-          href={{ pathname: '/token/[hash]/instance/[id]', query: { hash: item.token.address, id: item.id } }}
-          passHref
-          legacyBehavior
-        >
-          <LinkOverlay>
-            { mediaElement }
-          </LinkOverlay>
-        </NextLink>
-      ) }
+      { mediaElement }
       { item.id && (
         <Flex mb={ 2 } ml={ 1 }>
           <Text whiteSpace="pre" variant="secondary">ID# </Text>

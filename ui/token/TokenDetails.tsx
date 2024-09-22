@@ -28,7 +28,7 @@ const TokenDetails = ({ tokenQuery }: Props) => {
 
   const changeUrlAndScroll = useCallback((tab: TokenTabs) => () => {
     router.push(
-      { pathname: '/token/[hash]', query: { hash: router.query.hash?.toString() || '', tab } },
+      { pathname: '/address/[hash]', query: { hash: router.query.hash?.toString() || '', tab } },
       undefined,
       { shallow: true },
     );

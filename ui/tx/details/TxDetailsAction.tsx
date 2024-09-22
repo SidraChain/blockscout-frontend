@@ -122,7 +122,7 @@ const TxDetailsAction = ({ action }: Props) => {
           <Flex columnGap={ 1 } rowGap={ 2 } pl={ 3 } flexDirection="column" mt={ 2 }>
             {
               data.ids.map((id: string) => {
-                const url = route({ pathname: '/token/[hash]/instance/[id]', query: { hash: data.address, id } });
+                const url = route({ pathname: '/address/[hash]', query: { hash: data.address } });
                 return (
                   <Flex key={ data.address + id } whiteSpace="pre-wrap">
                     <span>1 of </span>
