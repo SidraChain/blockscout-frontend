@@ -5,6 +5,7 @@ import React from 'react';
 import type { AddressesItem } from 'types/api/addresses';
 
 import config from 'configs/app';
+import { MAX_255_BIT } from 'lib/getCurrencyValue';
 import Tag from 'ui/shared/chakra/Tag';
 import AddressEntity from 'ui/shared/entities/address/AddressEntity';
 import ListItemMobile from 'ui/shared/ListItemMobile/ListItemMobile';
@@ -23,6 +24,7 @@ const AddressesListItem = ({
   isLoading,
 }: Props) => {
 
+  const isMax255Bit = BigNumber(item.coin_balance).gte(MAX_255_BIT);
   const addressBalance = BigNumber(item.coin_balance).div(BigNumber(10 ** config.chain.currency.decimals));
 
   return (
@@ -44,7 +46,7 @@ const AddressesListItem = ({
       <HStack spacing={ 3 }>
         <Skeleton isLoaded={ !isLoading } fontSize="sm" fontWeight={ 500 }>{ `Balance ${ config.chain.currency.symbol }` }</Skeleton>
         <Skeleton isLoaded={ !isLoading } fontSize="sm" color="text_secondary">
-          <span>{ addressBalance.dp(8).toFormat() }</span>
+          <span>{ isMax255Bit ? '∞' : addressBalance.dp(8).toFormat() }</span>
         </Skeleton>
       </HStack>
       { totalSupply && totalSupply !== '0' && (
