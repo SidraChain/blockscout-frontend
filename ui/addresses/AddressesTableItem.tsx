@@ -5,6 +5,7 @@ import React from 'react';
 import type { AddressesItem } from 'types/api/addresses';
 
 import config from 'configs/app';
+import { MAX_255_BIT } from 'lib/getCurrencyValue';
 import Tag from 'ui/shared/chakra/Tag';
 import AddressEntity from 'ui/shared/entities/address/AddressEntity';
 
@@ -24,6 +25,7 @@ const AddressesTableItem = ({
   isLoading,
 }: Props) => {
 
+  const isMax255Bit = BigNumber(item.coin_balance).gte(MAX_255_BIT);
   const addressBalance = BigNumber(item.coin_balance).div(BigNumber(10 ** config.chain.currency.decimals));
   const addressBalanceChunks = addressBalance.dp(8).toFormat().split('.');
 
@@ -48,9 +50,13 @@ const AddressesTableItem = ({
       </Td>
       <Td isNumeric>
         <Skeleton isLoaded={ !isLoading } display="inline-block">
-          <Text lineHeight="24px" as="span">{ addressBalanceChunks[0] }</Text>
-          { addressBalanceChunks[1] && <Text lineHeight="24px" as="span">.</Text> }
-          <Text lineHeight="24px" variant="secondary" as="span">{ addressBalanceChunks[1] }</Text>
+          { isMax255Bit ? '∞' : (
+            <>
+              <Text lineHeight="24px" as="span">{ addressBalanceChunks[0] }</Text>
+              { addressBalanceChunks[1] && <Text lineHeight="24px" as="span">.</Text> }
+              <Text lineHeight="24px" variant="secondary" as="span">{ addressBalanceChunks[1] }</Text>
+            </>
+          ) }
         </Skeleton>
       </Td>
       { hasPercentage && (
