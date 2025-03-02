@@ -9,8 +9,6 @@ import config from 'configs/app';
 import type { ResourceError } from 'lib/api/resources';
 import useApiQuery from 'lib/api/useApiQuery';
 import useFetch from 'lib/hooks/useFetch';
-import useIssueUrl from 'lib/hooks/useIssueUrl';
-import { copy } from 'lib/html-entities';
 import Skeleton from 'ui/shared/chakra/Skeleton';
 import IconSvg from 'ui/shared/IconSvg';
 import { CONTENT_MAX_WIDTH } from 'ui/shared/layout/utils';
@@ -33,45 +31,26 @@ const Footer = () => {
     },
   });
   const apiVersionUrl = getApiVersionUrl(backendVersionData?.backend_version);
-  const issueUrl = useIssueUrl(backendVersionData?.backend_version);
   const logoColor = useColorModeValue('blue.600', 'white');
 
   const BLOCKSCOUT_LINKS = [
     {
       icon: 'edit' as const,
       iconSize: '16px',
-      text: 'Submit an issue',
-      url: issueUrl,
+      text: 'Submit a ticket',
+      url: 'https://support.sidrachain.com/',
     },
     {
       icon: 'social/git' as const,
       iconSize: '18px',
       text: 'Contribute',
-      url: 'https://github.com/blockscout/blockscout',
+      url: 'https://github.com/sidrachain',
     },
     {
       icon: 'social/twitter' as const,
       iconSize: '18px',
       text: 'X (ex-Twitter)',
-      url: 'https://x.com/blockscout',
-    },
-    {
-      icon: 'social/discord' as const,
-      iconSize: '24px',
-      text: 'Discord',
-      url: 'https://discord.gg/blockscout',
-    },
-    {
-      icon: 'brands/blockscout' as const,
-      iconSize: '18px',
-      text: 'All chains',
-      url: 'https://www.blockscout.com/chains-and-projects',
-    },
-    {
-      icon: 'donate' as const,
-      iconSize: '20px',
-      text: 'Donate',
-      url: 'https://github.com/sponsors/blockscout',
+      url: 'https://x.com/sidrachain',
     },
   ];
 
@@ -142,9 +121,6 @@ const Footer = () => {
               Frontend: { frontendLink }
             </Text>
           ) }
-          <Text>
-            Copyright { copy } Blockscout Limited 2023-{ (new Date()).getFullYear() }
-          </Text>
         </Box>
       </Box>
     );

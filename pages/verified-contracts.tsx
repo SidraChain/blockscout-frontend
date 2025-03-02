@@ -1,17 +1,8 @@
 import type { NextPage } from 'next';
-import dynamic from 'next/dynamic';
-import React from 'react';
-
-import PageNextJs from 'nextjs/PageNextJs';
-
-const VerifiedContracts = dynamic(() => import('ui/pages/VerifiedContracts'), { ssr: false });
+import { redirect } from 'next/navigation';
 
 const Page: NextPage = () => {
-  return (
-    <PageNextJs pathname="/verified-contracts">
-      <VerifiedContracts/>
-    </PageNextJs>
-  );
+  redirect('https://www.sidrachain.com/tokens');
 };
 
 export default Page;

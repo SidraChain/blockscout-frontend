@@ -1,17 +1,8 @@
 import type { NextPage } from 'next';
-import dynamic from 'next/dynamic';
-import React from 'react';
-
-import PageNextJs from 'nextjs/PageNextJs';
-
-const TokenTransfers = dynamic(() => import('ui/pages/TokenTransfers'), { ssr: false });
+import { redirect } from 'next/navigation';
 
 const Page: NextPage = () => {
-  return (
-    <PageNextJs pathname="/token-transfers">
-      <TokenTransfers/>
-    </PageNextJs>
-  );
+  redirect('https://www.sidrachain.com/tokens');
 };
 
 export default Page;

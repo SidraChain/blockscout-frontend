@@ -1,17 +1,8 @@
 import type { NextPage } from 'next';
-import React from 'react';
+import { redirect } from 'next/navigation';
 
-import type { Props } from 'nextjs/getServerSideProps';
-import PageNextJs from 'nextjs/PageNextJs';
-
-import ContractVerification from 'ui/pages/ContractVerification';
-
-const Page: NextPage<Props> = (props: Props) => {
-  return (
-    <PageNextJs pathname="/contract-verification" query={ props.query }>
-      <ContractVerification/>
-    </PageNextJs>
-  );
+const Page: NextPage = () => {
+  redirect('https://www.sidrachain.com/tokens');
 };
 
 export default Page;
