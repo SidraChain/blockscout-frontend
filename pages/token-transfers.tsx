@@ -1,14 +1,27 @@
-import type { GetServerSideProps, NextPage } from 'next';
+import type { NextPage } from 'next';
+import dynamic from 'next/dynamic';
+import React from 'react';
 
-const Page: NextPage = () => null;
+import PageNextJs from 'nextjs/PageNextJs';
+
+import config from 'configs/app';
+
+const TokenTransfers = dynamic(() => {
+  if (config.features.opSuperchain.isEnabled) {
+    return import('ui/optimismSuperchain/tokenTransfers/OpSuperchainTokenTransfers');
+  }
+
+  return import('ui/pages/TokenTransfers');
+}, { ssr: false });
+
+const Page: NextPage = () => {
+  return (
+    <PageNextJs pathname="/token-transfers">
+      <TokenTransfers/>
+    </PageNextJs>
+  );
+};
 
 export default Page;
 
-export const getServerSideProps: GetServerSideProps = async() => {
-  return {
-    redirect: {
-      destination: 'https://www.sidrachain.com/tokens',
-      permanent: false,
-    },
-  };
-};
+export { base as getServerSideProps } from 'nextjs/getServerSideProps/main';

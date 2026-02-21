@@ -1,38 +1,37 @@
-import { Box, HStack } from '@chakra-ui/react';
+import { Box } from '@chakra-ui/react';
 import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 
 import type { SocketMessage } from 'lib/socket/types';
-
-import { route } from 'nextjs-routes';
+import type { ClusterChainConfig } from 'types/multichain';
 
 import useApiQuery, { getResourceKey } from 'lib/api/useApiQuery';
 import useSocketChannel from 'lib/socket/useSocketChannel';
 import useSocketMessage from 'lib/socket/useSocketMessage';
 import { BLOCK } from 'stubs/block';
-import { Link } from 'toolkit/chakra/link';
+import BlockEntity from 'ui/shared/entities/block/BlockEntity';
 import TimeWithTooltip from 'ui/shared/time/TimeWithTooltip';
 
 interface Props {
-  slug: string;
+  chainData: ClusterChainConfig;
 }
 
-const ChainLatestBlockInfo = ({ slug }: Props) => {
+const ChainLatestBlockInfo = ({ chainData }: Props) => {
   const queryClient = useQueryClient();
 
   const blocksQuery = useApiQuery('general:homepage_blocks', {
-    chainSlug: slug,
+    chain: chainData,
     queryOptions: {
       placeholderData: [ BLOCK ],
     },
   });
 
   const handleNewBlockMessage: SocketMessage.NewBlock['handler'] = React.useCallback((payload) => {
-    const queryKey = getResourceKey('general:homepage_blocks', { chainSlug: slug });
+    const queryKey = getResourceKey('general:homepage_blocks', { chainId: chainData.id });
     queryClient.setQueryData(queryKey, () => {
       return [ payload.block ];
     });
-  }, [ queryClient, slug ]);
+  }, [ queryClient, chainData.id ]);
 
   const channel = useSocketChannel({
     topic: 'blocks:new_block',
@@ -49,20 +48,13 @@ const ChainLatestBlockInfo = ({ slug }: Props) => {
   }
 
   return (
-    <HStack gap={ 2 }>
-      <Box color="text.secondary">Latest block</Box>
-      <Link
-        loading={ blocksQuery.isPlaceholderData }
-        href={ route({
-          pathname: '/chain/[chain-slug]/block/[height_or_hash]',
-          query: {
-            'chain-slug': slug,
-            height_or_hash: blocksQuery.data[0].height.toString(),
-          },
-        }) }
-      >
-        { blocksQuery.data[0].height }
-      </Link>
+    <Box display="grid" gridTemplateColumns="repeat(3, auto)" gap={ 2 }>
+      <Box color="text.secondary" whiteSpace="nowrap">Latest block</Box>
+      <BlockEntity
+        number={ blocksQuery.data[0].height }
+        isLoading={ blocksQuery.isPlaceholderData }
+        noIcon
+      />
       <TimeWithTooltip
         timestamp={ blocksQuery.data[0].timestamp }
         enableIncrement={ !blocksQuery.isPlaceholderData }
@@ -71,7 +63,7 @@ const ChainLatestBlockInfo = ({ slug }: Props) => {
         flexShrink={ 0 }
         timeFormat="relative"
       />
-    </HStack>
+    </Box>
   );
 };
 

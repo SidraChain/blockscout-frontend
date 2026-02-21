@@ -4,65 +4,71 @@ import { dirname, resolve as resolvePath } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
 import * as viemChains from 'viem/chains';
-import { pick } from 'es-toolkit';
+import { pick, uniq, delay } from 'es-toolkit';
 
 import { EssentialDappsConfig } from 'types/client/marketplace';
-import { ChainConfig } from 'types/multichain';
 import { getEnvValue, parseEnvJson } from 'configs/app/utils';
-import {uniq } from 'es-toolkit';
 import currentChainConfig from 'configs/app';
+import appConfig from 'configs/app';
+import { EssentialDappsChainConfig } from 'types/client/marketplace';
 
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDir = dirname(currentFilePath);
 
 async function getChainscoutInfo(externalChainIds: Array<string>, currentChainId: string | undefined) {
-  const response = await fetch('https://chains.blockscout.com/api/chains');
-  if (!response.ok) {
-    throw new Error(`Failed to fetch chains info from Chainscout API`);
-  }
-  const chainsInfo = await response.json() as Record<string, { explorers: [ { url: string } ], logo: string }>;
+  
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    controller.abort(`Request to Chainscout API timed out`);
+  }, 30_000);
 
-  return {
-    externals: externalChainIds.map((chainId) => ({
-      id: chainId,
-      explorerUrl: chainsInfo[chainId]?.explorers[0]?.url,
-      logoUrl: chainsInfo[chainId]?.logo,
-    })),
-    current: currentChainId ? {
-      id: currentChainId,
-      explorerUrl: chainsInfo[currentChainId]?.explorers[0]?.url,
-      logoUrl: chainsInfo[currentChainId]?.logo,
-    } : undefined,
+  try {
+    const response = await fetch(
+      `https://chains.blockscout.com/api/chains?chain_ids=${ [currentChainId, ...externalChainIds].filter(Boolean).join(',') }`,
+      { signal: controller.signal }
+    );
+    if (!response.ok) {
+      throw new Error(`Failed to fetch chains info from Chainscout API`);
+    }
+    const chainsInfo = await response.json() as Record<string, { explorers: [ { url: string } ], logo: string }>;
+  
+    return {
+      externals: externalChainIds.map((chainId) => ({
+        id: chainId,
+        explorerUrl: chainsInfo[chainId]?.explorers[0]?.url,
+        logoUrl: chainsInfo[chainId]?.logo,
+      })),
+      current: currentChainId ? {
+        id: currentChainId,
+        explorerUrl: chainsInfo[currentChainId]?.explorers[0]?.url,
+        logoUrl: chainsInfo[currentChainId]?.logo,
+      } : undefined,
+    }
+    
+  } catch (error) {
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
-function getSlug(chainName: string) {
-  return chainName.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
-}
-
-function trimChainConfig(config: ChainConfig['config'], logoUrl: string | undefined) {
+function trimChainConfig(config: typeof appConfig, logoUrl: string | undefined) {
   return {
     ...pick(config, [ 'app', 'chain' ]),
     apis: pick(config.apis || {}, [ 'general' ]),
-    UI: {
-      navigation: {
-        icon: {
-          'default': logoUrl,
-        }
-      },
-    }
   };
 }
 
 async function computeChainConfig(url: string): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const workerPath = resolvePath(currentDir, 'worker.js');
+  const workerPath = resolvePath(currentDir, 'worker.js');
 
-    const worker = new Worker(workerPath, {
-      workerData: { url },
-      env: {} // Start with empty environment
-    });
+  const worker = new Worker(workerPath, {
+    workerData: { url },
+    env: {} // Start with empty environment
+  });
+  const controller = new AbortController();
 
+  const configPromise = new Promise((resolve, reject) => {
     worker.on('message', (config) => {
       resolve(config);
     });
@@ -73,11 +79,17 @@ async function computeChainConfig(url: string): Promise<unknown> {
     });
 
     worker.on('exit', (code) => {
-      if (code !== 0) {
-        reject(new Error(`Worker stopped with exit code ${ code }`));
-      }
+      controller.abort();
+      reject(new Error(`Worker stopped with exit code ${ code }`));
     });
   });
+
+  return Promise.race([
+    configPromise,
+    delay(30_000, { signal: controller.signal })
+  ]).finally(() => {
+    worker.terminate();
+  })
 }
 
 async function run() {
@@ -102,31 +114,44 @@ async function run() {
     }
 
     const chainscoutInfo = await getChainscoutInfo(enabledChains, currentChainConfig.chain.id);
-    const chainsWithoutUrl = Object.entries(chainscoutInfo.externals).filter(([_, explorerUrl]) => !explorerUrl);
+    const chainsWithoutUrl = chainscoutInfo.externals.filter(({ explorerUrl }) => !explorerUrl);
 
     if (chainsWithoutUrl.length > 0) {
-      console.log(`⚠️  For the following chains explorer url was not found: ${ chainsWithoutUrl.map(([chainId]) => chainId).join(', ') }. Therefore, they will not be enabled.`);
+      console.log(`⚠️  For the following chains explorer url was not found: ${ chainsWithoutUrl.map(({ id }) => id).join(', ') }. Therefore, they will not be enabled.`);
     }
-    const explorerUrls = Object.values(chainscoutInfo.externals).map(({ explorerUrl }) => explorerUrl);
+    const explorerUrls = chainscoutInfo.externals.map(({ explorerUrl }) => explorerUrl).filter(Boolean);
     console.log(`ℹ️  For ${ explorerUrls.length } chains explorer url was found in static config. Fetching parameters for each chain...`);
 
-    const chainConfigs = await Promise.all(explorerUrls.map(computeChainConfig)) as Array<ChainConfig['config']>;
+    const chainConfigs: Array<typeof appConfig> = [];
+
+    for (const explorerUrl of explorerUrls) {
+      const chainConfig = (await computeChainConfig(explorerUrl)) as typeof appConfig | undefined;
+      if (!chainConfig) {
+        throw new Error(`Failed to fetch chain config for ${ explorerUrl }`);
+      }
+      chainConfigs.push(chainConfig);
+    }
 
     const result = {
-      chains: [ currentChainConfig, ...chainConfigs ].map((config, index) => {
+      chains: [ currentChainConfig, ...chainConfigs ].map((config) => {
+        const chainId = config.chain.id;
+        const chainInfo = [...chainscoutInfo.externals, chainscoutInfo.current].find((chain) => chain?.id === chainId);
         const logoUrl = [...chainscoutInfo.externals, chainscoutInfo.current].find((chain) => chain?.id === config.chain.id)?.logoUrl;
-        const chainName = (config as { chain: { name: string } })?.chain?.name ?? `Chain ${ index + 1 }`;
+        const chainName = (config as { chain: { name: string } })?.chain?.name ?? `Chain ${ chainId }`;
         return {
-          slug: getSlug(chainName),
-          config: trimChainConfig(config, logoUrl),
+          id: chainId || '',
+          name: chainName,
+          logo: chainInfo?.logoUrl,
+          explorer_url: chainInfo?.explorerUrl || '',
+          app_config: trimChainConfig(config, logoUrl),
           contracts: Object.values(viemChains).find(({ id }) => id === Number(config.chain.id))?.contracts
-        };
+        } satisfies EssentialDappsChainConfig;
       }),
     };
-    
+
     const outputDir = resolvePath(currentDir, '../../../../public/assets/essential-dapps');
     mkdirSync(outputDir, { recursive: true });
-    
+
     const outputPathJson = resolvePath(outputDir, 'chains.json');
     writeFileSync(outputPathJson, JSON.stringify(result, null, 2));
 

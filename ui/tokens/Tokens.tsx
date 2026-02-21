@@ -3,7 +3,6 @@ import React from 'react';
 
 import type { TokensSortingValue } from 'types/api/tokens';
 
-import { apos } from 'toolkit/utils/htmlEntities';
 import DataFetchAlert from 'ui/shared/DataFetchAlert';
 import DataListDisplay from 'ui/shared/DataListDisplay';
 import type { QueryWithPagesResult } from 'ui/shared/pagination/useQueryWithPages';
@@ -12,9 +11,9 @@ import TokensListItem from './TokensListItem';
 import TokensTable from './TokensTable';
 
 interface Props {
-  query: QueryWithPagesResult<'general:tokens'> | QueryWithPagesResult<'general:tokens_bridged'>;
-  onSortChange: (value: TokensSortingValue) => void;
-  sort: TokensSortingValue;
+  query: QueryWithPagesResult<'general:tokens'> | QueryWithPagesResult<'general:tokens_bridged'> | QueryWithPagesResult<'multichainAggregator:tokens'>;
+  onSortChange?: (value: TokensSortingValue) => void;
+  sort?: TokensSortingValue;
   actionBar?: React.ReactNode;
   hasActiveFilters: boolean;
   description?: React.ReactNode;
@@ -33,15 +32,19 @@ const Tokens = ({ query, onSortChange, sort, actionBar, description, hasActiveFi
     <>
       <Box hideFrom="lg">
         { description }
-        { data.items.map((item, index) => (
-          <TokensListItem
-            key={ item.address_hash + (isPlaceholderData ? index : '') }
-            token={ item }
-            index={ index }
-            page={ pagination.page }
-            isLoading={ isPlaceholderData }
-          />
-        )) }
+        { data.items.map((item, index) => {
+          const chainIds = 'chain_infos' in item ? Object.keys(item.chain_infos).join(',') : undefined;
+
+          return (
+            <TokensListItem
+              key={ item.address_hash + (isPlaceholderData ? index : '') + (chainIds ? chainIds : '') }
+              token={ item }
+              index={ index }
+              page={ pagination.page }
+              isLoading={ isPlaceholderData }
+            />
+          );
+        }) }
       </Box>
       <Box hideBelow="lg">
         { description }
@@ -62,9 +65,9 @@ const Tokens = ({ query, onSortChange, sort, actionBar, description, hasActiveFi
       isError={ isError }
       itemsNum={ data?.items.length }
       emptyText="There are no tokens."
-      filterProps={{
-        emptyFilteredText: `Couldn${ apos }t find token that matches your filter query.`,
-        hasActiveFilters,
+      hasActiveFilters={ hasActiveFilters }
+      emptyStateProps={{
+        term: 'token',
       }}
       actionBar={ query.pagination.isVisible || hasActiveFilters ? actionBar : null }
     >

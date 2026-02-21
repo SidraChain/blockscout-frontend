@@ -6,10 +6,10 @@ import type { WithdrawalsItem } from 'types/api/withdrawals';
 
 import { Skeleton } from 'toolkit/chakra/skeleton';
 import { TableCell, TableRow } from 'toolkit/chakra/table';
-import CurrencyValue from 'ui/shared/CurrencyValue';
 import AddressEntity from 'ui/shared/entities/address/AddressEntity';
 import BlockEntity from 'ui/shared/entities/block/BlockEntity';
 import TimeWithTooltip from 'ui/shared/time/TimeWithTooltip';
+import NativeCoinValue from 'ui/shared/value/NativeCoinValue';
 
 type Props = ({
   item: WithdrawalsItem;
@@ -61,7 +61,7 @@ const BeaconChainWithdrawalsTableItem = ({ item, view, isLoading }: Props) => {
         </TableCell>
       ) }
       <TableCell verticalAlign="middle">
-        <CurrencyValue value={ item.amount } isLoading={ isLoading }/>
+        <NativeCoinValue amount={ item.amount } loading={ isLoading } noSymbol/>
       </TableCell>
     </TableRow>
   );

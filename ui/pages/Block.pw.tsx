@@ -20,12 +20,23 @@ test.beforeEach(async({ mockTextAd }) => {
 });
 
 test('degradation view, details tab', async({ render, mockApiResponse, mockRpcResponse, page }) => {
+  test.slow();
   await mockApiResponse('general:block', null as never, { pathParams: { height_or_hash: height }, status: 500 });
-  await mockRpcResponse({
-    Method: 'eth_getBlockByNumber',
-    Parameters: [ numberToHex(Number(height)), false ],
-    ReturnType: blockMock.rpcBlockBase,
-  });
+  await mockRpcResponse([
+    {
+      Method: 'eth_getBlockByNumber',
+      Parameters: [ 'latest', false ],
+      ReturnType: {
+        ...blockMock.rpcBlockBase,
+        number: String(Number(height) + 1_000) as `0x${ string }`,
+      },
+    },
+    {
+      Method: 'eth_getBlockByNumber',
+      Parameters: [ numberToHex(Number(height)), false ],
+      ReturnType: blockMock.rpcBlockBase,
+    },
+  ]);
 
   const component = await render(<Block/>, { hooksConfig });
   await page.waitForResponse(config.chain.rpcUrls[0]);
@@ -34,6 +45,7 @@ test('degradation view, details tab', async({ render, mockApiResponse, mockRpcRe
 });
 
 test('degradation view, txs tab', async({ render, mockApiResponse, mockRpcResponse, page }) => {
+  test.slow();
   const hooksConfig = {
     router: {
       query: { height_or_hash: height, tab: 'txs' },
@@ -42,11 +54,21 @@ test('degradation view, txs tab', async({ render, mockApiResponse, mockRpcRespon
 
   await mockApiResponse('general:block', blockMock.base, { pathParams: { height_or_hash: height } });
   await mockApiResponse('general:block_txs', null as never, { pathParams: { height_or_hash: height }, status: 500 });
-  await mockRpcResponse({
-    Method: 'eth_getBlockByNumber',
-    Parameters: [ numberToHex(Number(height)), true ],
-    ReturnType: blockMock.rpcBlockWithTxsInfo,
-  });
+  await mockRpcResponse([
+    {
+      Method: 'eth_getBlockByNumber',
+      Parameters: [ 'latest', false ],
+      ReturnType: {
+        ...blockMock.rpcBlockWithTxsInfo,
+        number: String(Number(height) + 1_000) as `0x${ string }`,
+      },
+    },
+    {
+      Method: 'eth_getBlockByNumber',
+      Parameters: [ numberToHex(Number(height)), true ],
+      ReturnType: blockMock.rpcBlockWithTxsInfo,
+    },
+  ]);
 
   const component = await render(<Block/>, { hooksConfig });
   await page.waitForResponse(config.chain.rpcUrls[0]);
@@ -55,6 +77,7 @@ test('degradation view, txs tab', async({ render, mockApiResponse, mockRpcRespon
 });
 
 test('degradation view, withdrawals tab', async({ render, mockApiResponse, mockRpcResponse, mockEnvs, page }) => {
+  test.slow();
   const hooksConfig = {
     router: {
       query: { height_or_hash: height, tab: 'withdrawals' },
@@ -64,11 +87,21 @@ test('degradation view, withdrawals tab', async({ render, mockApiResponse, mockR
   await mockEnvs(ENVS_MAP.beaconChain);
   await mockApiResponse('general:block', blockMock.withWithdrawals, { pathParams: { height_or_hash: height } });
   await mockApiResponse('general:block_withdrawals', null as never, { pathParams: { height_or_hash: height }, status: 500 });
-  await mockRpcResponse({
-    Method: 'eth_getBlockByNumber',
-    Parameters: [ numberToHex(Number(height)), false ],
-    ReturnType: blockMock.rpcBlockBase,
-  });
+  await mockRpcResponse([
+    {
+      Method: 'eth_getBlockByNumber',
+      Parameters: [ 'latest', false ],
+      ReturnType: {
+        ...blockMock.rpcBlockBase,
+        number: String(Number(height) + 1_000) as `0x${ string }`,
+      },
+    },
+    {
+      Method: 'eth_getBlockByNumber',
+      Parameters: [ numberToHex(Number(height)), false ],
+      ReturnType: blockMock.rpcBlockBase,
+    },
+  ]);
 
   const component = await render(<Block/>, { hooksConfig });
   await page.waitForResponse(config.chain.rpcUrls[0]);

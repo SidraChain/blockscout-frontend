@@ -1,15 +1,13 @@
 import { Text } from '@chakra-ui/react';
-import BigNumber from 'bignumber.js';
 import React from 'react';
 
 import type { Transaction } from 'types/api/transaction';
 
-import { currencyUnits } from 'lib/units';
 import { Skeleton } from 'toolkit/chakra/skeleton';
-import { WEI_IN_GWEI } from 'toolkit/utils/consts';
-import CurrencyValue from 'ui/shared/CurrencyValue';
 import * as DetailedInfo from 'ui/shared/DetailedInfo/DetailedInfo';
+import DetailedInfoNativeCoinValue from 'ui/shared/DetailedInfo/DetailedInfoNativeCoinValue';
 import TextSeparator from 'ui/shared/TextSeparator';
+import NativeCoinValue from 'ui/shared/value/NativeCoinValue';
 
 type Props = {
   data: Transaction;
@@ -28,14 +26,11 @@ export const TxInfoScrollFees = ({ data, isLoading }: Props) => {
           >
             L1 data fee
           </DetailedInfo.ItemLabel>
-          <DetailedInfo.ItemValue>
-            <CurrencyValue
-              value={ data.scroll?.l1_fee }
-              currency={ currencyUnits.ether }
-              exchangeRate={ data.exchange_rate }
-              flexWrap="wrap"
-            />
-          </DetailedInfo.ItemValue>
+          <DetailedInfoNativeCoinValue
+            amount={ data.scroll?.l1_fee }
+            exchangeRate={ data.exchange_rate }
+            loading={ isLoading }
+          />
         </>
       ) }
 
@@ -47,14 +42,11 @@ export const TxInfoScrollFees = ({ data, isLoading }: Props) => {
           >
             Execution fee
           </DetailedInfo.ItemLabel>
-          <DetailedInfo.ItemValue>
-            <CurrencyValue
-              value={ data.scroll?.l2_fee.value }
-              currency={ currencyUnits.ether }
-              exchangeRate={ data.exchange_rate }
-              flexWrap="wrap"
-            />
-          </DetailedInfo.ItemValue>
+          <DetailedInfoNativeCoinValue
+            amount={ data.scroll?.l2_fee.value }
+            exchangeRate={ data.exchange_rate }
+            loading={ isLoading }
+          />
         </>
       ) }
 
@@ -66,14 +58,11 @@ export const TxInfoScrollFees = ({ data, isLoading }: Props) => {
           >
             L1 commit scalar
           </DetailedInfo.ItemLabel>
-          <DetailedInfo.ItemValue>
-            <CurrencyValue
-              value={ String(data.scroll?.l1_fee_commit_scalar) }
-              currency={ currencyUnits.ether }
-              exchangeRate={ data.exchange_rate }
-              flexWrap="wrap"
-            />
-          </DetailedInfo.ItemValue>
+          <DetailedInfoNativeCoinValue
+            amount={ String(data.scroll?.l1_fee_commit_scalar) }
+            exchangeRate={ data.exchange_rate }
+            loading={ isLoading }
+          />
         </>
       ) }
 
@@ -85,16 +74,11 @@ export const TxInfoScrollFees = ({ data, isLoading }: Props) => {
           >
             L1 Fee Overhead
           </DetailedInfo.ItemLabel>
-          <DetailedInfo.ItemValue>
-            <Skeleton loading={ isLoading }>
-              <CurrencyValue
-                value={ String(data.scroll?.l1_fee_overhead) }
-                currency={ currencyUnits.ether }
-                exchangeRate={ data.exchange_rate }
-                flexWrap="wrap"
-              />
-            </Skeleton>
-          </DetailedInfo.ItemValue>
+          <DetailedInfoNativeCoinValue
+            amount={ String(data.scroll?.l1_fee_overhead) }
+            exchangeRate={ data.exchange_rate }
+            loading={ isLoading }
+          />
         </>
       ) }
       { (data.scroll?.l1_base_fee !== undefined || data.scroll?.l1_fee_scalar !== undefined) && (
@@ -109,14 +93,26 @@ export const TxInfoScrollFees = ({ data, isLoading }: Props) => {
             { data.scroll?.l1_base_fee !== undefined && (
               <Skeleton loading={ isLoading }>
                 <Text as="span" fontWeight="500">Base: </Text>
-                <Text fontWeight="600" as="span">{ BigNumber(data.scroll?.l1_base_fee || 0).dividedBy(WEI_IN_GWEI).toFixed() }</Text>
+                <NativeCoinValue
+                  amount={ String(data.scroll?.l1_base_fee || 0) }
+                  units="gwei"
+                  unitsTooltip="wei"
+                  noSymbol
+                  fontWeight="600"
+                />
               </Skeleton>
             ) }
             { data.scroll?.l1_fee_scalar !== undefined && (
               <Skeleton loading={ isLoading }>
                 <TextSeparator/>
                 <Text as="span" fontWeight="500">Scalar: </Text>
-                <Text fontWeight="600" as="span">{ BigNumber(data.scroll?.l1_fee_scalar || 0).dividedBy(WEI_IN_GWEI).toFixed() }</Text>
+                <NativeCoinValue
+                  amount={ String(data.scroll?.l1_fee_scalar || 0) }
+                  units="gwei"
+                  unitsTooltip="wei"
+                  noSymbol
+                  fontWeight="600"
+                />
               </Skeleton>
             ) }
           </DetailedInfo.ItemValue>
@@ -134,14 +130,26 @@ export const TxInfoScrollFees = ({ data, isLoading }: Props) => {
             { data.scroll?.l1_blob_base_fee !== undefined && (
               <Skeleton loading={ isLoading }>
                 <Text as="span" fontWeight="500">Base: </Text>
-                <Text fontWeight="600" as="span">{ BigNumber(data.scroll?.l1_blob_base_fee || 0).dividedBy(WEI_IN_GWEI).toFixed() }</Text>
+                <NativeCoinValue
+                  amount={ String(data.scroll?.l1_blob_base_fee || 0) }
+                  units="gwei"
+                  unitsTooltip="wei"
+                  noSymbol
+                  fontWeight="600"
+                />
               </Skeleton>
             ) }
             { data.scroll?.l1_fee_blob_scalar !== undefined && (
               <Skeleton loading={ isLoading }>
                 <TextSeparator/>
                 <Text as="span" fontWeight="500">Scalar: </Text>
-                <Text fontWeight="600" as="span">{ BigNumber(data.scroll?.l1_fee_blob_scalar || 0).dividedBy(WEI_IN_GWEI).toFixed() }</Text>
+                <NativeCoinValue
+                  amount={ String(data.scroll?.l1_fee_blob_scalar || 0) }
+                  units="gwei"
+                  unitsTooltip="wei"
+                  noSymbol
+                  fontWeight="600"
+                />
               </Skeleton>
             ) }
           </DetailedInfo.ItemValue>

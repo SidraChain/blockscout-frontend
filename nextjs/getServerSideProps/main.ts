@@ -3,6 +3,8 @@ import { factory } from './utils';
 
 export const base = factory([ ]);
 export const block = factory([ guards.notOpSuperchain ]);
+export const tx = factory([ guards.notOpSuperchain ]);
+export const token = factory([ guards.notOpSuperchain ]);
 export const account = factory([ guards.account ]);
 export const verifiedAddresses = factory([ guards.account, guards.verifiedAddresses ]);
 export const userOps = factory([ guards.userOps ]);
@@ -20,6 +22,7 @@ export const accountsLabelSearch = factory([ guards.accountsLabelSearch ]);
 export const validators = factory([ guards.validators ]);
 export const validatorDetails = factory([ guards.validatorDetails ]);
 export const gasTracker = factory([ guards.gasTracker ]);
+export const hotContracts = factory([ guards.hotContracts ]);
 export const advancedFilter = factory([ guards.advancedFilter ]);
 export const dataAvailability = factory([ guards.dataAvailability ]);
 export const login = factory([ guards.login ]);

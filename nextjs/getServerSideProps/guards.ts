@@ -6,7 +6,6 @@ import type { Route } from 'nextjs-routes';
 import type { Props } from 'nextjs/getServerSideProps/handlers';
 
 import config from 'configs/app';
-import isNeedProxy from 'lib/api/isNeedProxy';
 
 export type Guard = (chainConfig: typeof config) => <Pathname extends Route['pathname'] = never>(context: GetServerSidePropsContext) =>
 Promise<GetServerSidePropsResult<Props<Pathname>> | undefined>;
@@ -143,6 +142,14 @@ export const gasTracker: Guard = (chainConfig: typeof config) => async() => {
   }
 };
 
+export const hotContracts: Guard = (chainConfig: typeof config) => async() => {
+  if (!chainConfig.features.hotContracts.isEnabled) {
+    return {
+      notFound: true,
+    };
+  }
+};
+
 export const advancedFilter: Guard = (chainConfig: typeof config) => async() => {
   if (!chainConfig.features.advancedFilter.isEnabled) {
     return {
@@ -159,8 +166,8 @@ export const dataAvailability: Guard = (chainConfig: typeof config) => async() =
   }
 };
 
-export const login: Guard = () => async() => {
-  if (!isNeedProxy()) {
+export const login: Guard = (chainConfig: typeof config) => async() => {
+  if (!chainConfig.app.isReview && !chainConfig.app.isDev) {
     return {
       notFound: true,
     };
@@ -211,8 +218,9 @@ export const rollup: Guard = (chainConfig: typeof config) => async() => {
 const DEPOSITS_ROLLUP_TYPES: Array<RollupType> = [ 'optimistic', 'shibarium', 'zkEvm', 'arbitrum', 'scroll' ];
 export const deposits: Guard = (chainConfig: typeof config) => async() => {
   const rollupFeature = chainConfig.features.rollup;
+  const beaconChainFeature = chainConfig.features.beaconChain;
   if (
-    !chainConfig.features.beaconChain.isEnabled &&
+    (!beaconChainFeature.isEnabled || beaconChainFeature.withdrawalsOnly) &&
     !(rollupFeature.isEnabled && DEPOSITS_ROLLUP_TYPES.includes(rollupFeature.type))) {
     return {
       notFound: true,

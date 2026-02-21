@@ -37,7 +37,7 @@ export type OptimisticL2OutputRootsResponse = {
   };
 };
 
-export type OptimisticL2BatchDataContainer = 'in_blob4844' | 'in_celestia' | 'in_calldata';
+export type OptimisticL2BatchDataContainer = 'in_blob4844' | 'in_celestia' | 'in_calldata' | 'in_eigenda';
 
 export type OptimisticL2TxnBatchesItem = {
   number: number;
@@ -71,6 +71,12 @@ export interface OptimisticL2BlobTypeCelestia {
   namespace: string;
 }
 
+export interface OptimisticL2BlobTypeEigenda {
+  cert: string;
+  l1_timestamp: string;
+  l1_transaction_hash: string;
+}
+
 interface OptimismL2TxnBatchBase {
   number: number;
   l1_timestamp: string;
@@ -94,7 +100,16 @@ export interface OptimismL2TxnBatchTypeCelestia extends OptimismL2TxnBatchBase {
   blobs: Array<OptimisticL2BlobTypeCelestia> | null;
 }
 
-export type OptimismL2TxnBatch = OptimismL2TxnBatchTypeCallData | OptimismL2TxnBatchTypeEip4844 | OptimismL2TxnBatchTypeCelestia;
+export interface OptimismL2TxnBatchTypeEigenda extends OptimismL2TxnBatchBase {
+  batch_data_container: 'in_eigenda';
+  blobs: Array<OptimisticL2BlobTypeEigenda> | null;
+}
+
+export type OptimismL2TxnBatch =
+  OptimismL2TxnBatchTypeCallData |
+  OptimismL2TxnBatchTypeEip4844 |
+  OptimismL2TxnBatchTypeCelestia |
+  OptimismL2TxnBatchTypeEigenda;
 
 export type OptimismL2BatchTxs = {
   items: Array<Transaction>;
@@ -113,7 +128,17 @@ export type OptimismL2BatchBlocks = {
   } | null;
 };
 
-export type OptimisticL2WithdrawalsItem = {
+export interface OptimisticL2WithdrawalClaimInfo {
+  portal_contract_address_hash: string | null;
+  msg_sender_address_hash: string | null;
+  msg_target_address_hash: string | null;
+  msg_data: string | null;
+  msg_gas_limit: string | null;
+  msg_nonce_raw: string | null;
+  msg_value: string | null;
+}
+
+export interface OptimisticL2WithdrawalsItem extends OptimisticL2WithdrawalClaimInfo {
   challenge_period_end: string | null;
   from: AddressParam | null;
   l1_transaction_hash: string | null;

@@ -2,7 +2,7 @@ import { Box, chakra, Flex } from '@chakra-ui/react';
 import type { IconProps } from '@chakra-ui/react';
 import React from 'react';
 
-import type { ChainConfig } from 'types/multichain';
+import type { ExternalChain } from 'types/externalChains';
 
 import type { ImageProps } from 'toolkit/chakra/image';
 import { Image } from 'toolkit/chakra/image';
@@ -10,13 +10,13 @@ import type { LinkProps } from 'toolkit/chakra/link';
 import { Link as LinkToolkit } from 'toolkit/chakra/link';
 import { Skeleton } from 'toolkit/chakra/skeleton';
 import { Tooltip } from 'toolkit/chakra/tooltip';
+import { TruncatedText } from 'toolkit/components/truncation/TruncatedText';
 import type { Props as CopyToClipboardProps } from 'ui/shared/CopyToClipboard';
 import CopyToClipboard from 'ui/shared/CopyToClipboard';
 import HashStringShorten from 'ui/shared/HashStringShorten';
 import HashStringShortenDynamic from 'ui/shared/HashStringShortenDynamic';
 import type { Props as IconSvgProps } from 'ui/shared/IconSvg';
 import IconSvg from 'ui/shared/IconSvg';
-import TruncatedValue from 'ui/shared/TruncatedValue';
 
 import { getContentProps, getIconProps } from './utils';
 
@@ -40,7 +40,7 @@ export interface EntityBaseProps {
   truncation?: Truncation;
   truncationMaxSymbols?: number;
   variant?: Variant;
-  chain?: ChainConfig;
+  chain?: ExternalChain;
 }
 
 export interface ContainerBaseProps extends Pick<EntityBaseProps, 'className'> {
@@ -96,7 +96,7 @@ const Link = chakra(({ isLoading, children, external, onClick, href, noLink, var
 });
 
 type EntityIconProps = (ImageProps | IconSvgProps) & Pick<IconProps, 'color' | 'borderRadius' | 'marginRight' | 'boxSize'> & {
-  shield?: IconShieldProps;
+  shield?: IconShieldProps | false;
   hint?: string;
   hintPostfix?: string;
   tooltipInteractive?: boolean;
@@ -143,25 +143,25 @@ const Icon = (props: IconBaseProps) => {
     );
   })();
 
-  const iconElementWithHint = hint ? (
+  const content = (
+    <Box position="relative" display="inline-flex" alignItems="center" flexShrink={ 0 }>
+      { iconElement }
+      { shield && <IconShield isLoading={ isLoading } variant={ variant } { ...shield }/> }
+    </Box>
+  );
+
+  if (!hint) {
+    return content;
+  }
+
+  return (
     <Tooltip
       content={ hint }
       interactive={ tooltipInteractive }
       positioning={ shield ? { offset: { mainAxis: 8 } } : undefined }
     >
-      { iconElement }
+      { content }
     </Tooltip>
-  ) : iconElement;
-
-  if (!shield) {
-    return iconElementWithHint;
-  }
-
-  return (
-    <Box position="relative" display="inline-flex" alignItems="center" flexShrink={ 0 }>
-      { iconElementWithHint }
-      <IconShield isLoading={ isLoading } variant={ variant } { ...shield }/>
-    </Box>
   );
 };
 
@@ -218,10 +218,10 @@ const Content = chakra(({
 
   if (truncation === 'tail') {
     return (
-      <TruncatedValue
+      <TruncatedText
+        text={ text }
+        loading={ isLoading }
         className={ className }
-        isLoading={ isLoading }
-        value={ text }
         tooltipInteractive={ tooltipInteractive }
         { ...styles }
       />

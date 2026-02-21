@@ -1,0 +1,36 @@
+name: Deploy from main branch
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.husky/**'
+      - '.vscode/**'
+      - 'docs/**'
+      - 'vitest/**'
+      - 'mocks/**'
+      - 'playwright/**'
+      - 'stubs/**'
+      - 'tools/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish_image:
+    name: Publish Docker image
+    uses: './.github/workflows/publish-image.yml'
+    secrets: inherit
+    with:
+      tags: |
+        type=ref,event=branch
+        type=raw,value=unstable
+      platforms: linux/amd64

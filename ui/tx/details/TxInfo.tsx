@@ -30,10 +30,9 @@ import { CollapsibleDetails } from 'toolkit/chakra/collapsible';
 import { Link } from 'toolkit/chakra/link';
 import { Skeleton } from 'toolkit/chakra/skeleton';
 import { Tooltip } from 'toolkit/chakra/tooltip';
-import { WEI, WEI_IN_GWEI } from 'toolkit/utils/consts';
 import CopyToClipboard from 'ui/shared/CopyToClipboard';
-import CurrencyValue from 'ui/shared/CurrencyValue';
 import * as DetailedInfo from 'ui/shared/DetailedInfo/DetailedInfo';
+import DetailedInfoNativeCoinValue from 'ui/shared/DetailedInfo/DetailedInfoNativeCoinValue';
 import DetailedInfoSponsoredItem from 'ui/shared/DetailedInfo/DetailedInfoSponsoredItem';
 import DetailedInfoTimestamp from 'ui/shared/DetailedInfo/DetailedInfoTimestamp';
 import AddressEntity from 'ui/shared/entities/address/AddressEntity';
@@ -49,6 +48,8 @@ import StatusTag from 'ui/shared/statusTag/StatusTag';
 import TxStatus from 'ui/shared/statusTag/TxStatus';
 import TextSeparator from 'ui/shared/TextSeparator';
 import Utilization from 'ui/shared/Utilization/Utilization';
+import GasPriceValue from 'ui/shared/value/GasPriceValue';
+import NativeCoinValue from 'ui/shared/value/NativeCoinValue';
 import VerificationSteps from 'ui/shared/verificationSteps/VerificationSteps';
 import TxDetailsActions from 'ui/tx/details/txDetailsActions/TxDetailsActions';
 import TxDetailsBurntFees from 'ui/tx/details/TxDetailsBurntFees';
@@ -228,14 +229,11 @@ const TxInfo = ({ data, tacOperations, isLoading, socketStatus }: Props) => {
             <Flex flexDir="column" rowGap={ 2 }>
               { data.op_withdrawals.map((withdrawal) => (
                 <Box key={ withdrawal.nonce }>
-                  <Box mb={ 2 }>
+                  <Box mb={ 2 } py={{ base: '5px', lg: 1 }}>
                     <span>Nonce: </span>
                     <chakra.span fontWeight={ 600 }>{ withdrawal.nonce }</chakra.span>
                   </Box>
-                  <TxDetailsWithdrawalStatusOptimistic
-                    status={ withdrawal.status }
-                    l1TxHash={ withdrawal.l1_transaction_hash }
-                  />
+                  <TxDetailsWithdrawalStatusOptimistic data={ withdrawal } txHash={ data.hash } from={ data.from }/>
                 </Box>
               )) }
             </Flex>
@@ -395,9 +393,7 @@ const TxInfo = ({ data, tacOperations, isLoading, socketStatus }: Props) => {
             Timestamp
           </DetailedInfo.ItemLabel>
           <DetailedInfo.ItemValue multiRow>
-            <Flex alignItems="center" maxW="100%">
-              <DetailedInfoTimestamp timestamp={ data.timestamp } isLoading={ isLoading }/>
-            </Flex>
+            <DetailedInfoTimestamp timestamp={ data.timestamp } isLoading={ isLoading }/>
             { data.confirmation_duration && (
               <Flex alignItems="center">
                 <TextSeparator hideBelow="lg"/>
@@ -613,15 +609,11 @@ const TxInfo = ({ data, tacOperations, isLoading, socketStatus }: Props) => {
           >
             Value
           </DetailedInfo.ItemLabel>
-          <DetailedInfo.ItemValue>
-            <CurrencyValue
-              value={ data.value }
-              currency={ currencyUnits.ether }
-              exchangeRate={ data.exchange_rate }
-              isLoading={ isLoading }
-              flexWrap="wrap"
-            />
-          </DetailedInfo.ItemValue>
+          <DetailedInfoNativeCoinValue
+            amount={ data.value }
+            exchangeRate={ data.exchange_rate }
+            loading={ isLoading }
+          />
         </>
       ) }
 
@@ -634,14 +626,11 @@ const TxInfo = ({ data, tacOperations, isLoading, socketStatus }: Props) => {
           >
             Operator fee
           </DetailedInfo.ItemLabel>
-          <DetailedInfo.ItemValue multiRow>
-            <CurrencyValue
-              value={ data.operator_fee }
-              currency={ currencyUnits.ether }
-              exchangeRate={ data.exchange_rate }
-              flexWrap="wrap"
-            />
-          </DetailedInfo.ItemValue>
+          <DetailedInfoNativeCoinValue
+            amount={ data.operator_fee }
+            exchangeRate={ data.exchange_rate }
+            loading={ isLoading }
+          />
         </>
       ) }
 
@@ -653,15 +642,11 @@ const TxInfo = ({ data, tacOperations, isLoading, socketStatus }: Props) => {
           >
             Poster fee
           </DetailedInfo.ItemLabel>
-          <DetailedInfo.ItemValue>
-            <CurrencyValue
-              value={ data.arbitrum.poster_fee }
-              currency={ currencyUnits.ether }
-              exchangeRate={ data.exchange_rate }
-              flexWrap="wrap"
-              isLoading={ isLoading }
-            />
-          </DetailedInfo.ItemValue>
+          <DetailedInfoNativeCoinValue
+            amount={ data.arbitrum.poster_fee }
+            exchangeRate={ data.exchange_rate }
+            loading={ isLoading }
+          />
 
           <DetailedInfo.ItemLabel
             hint="Fee paid to the network for L2 resources"
@@ -669,15 +654,11 @@ const TxInfo = ({ data, tacOperations, isLoading, socketStatus }: Props) => {
           >
             Network fee
           </DetailedInfo.ItemLabel>
-          <DetailedInfo.ItemValue>
-            <CurrencyValue
-              value={ data.arbitrum.network_fee }
-              currency={ currencyUnits.ether }
-              exchangeRate={ data.exchange_rate }
-              flexWrap="wrap"
-              isLoading={ isLoading }
-            />
-          </DetailedInfo.ItemValue>
+          <DetailedInfoNativeCoinValue
+            amount={ data.arbitrum.network_fee }
+            exchangeRate={ data.exchange_rate }
+            loading={ isLoading }
+          />
         </>
       ) }
 
@@ -752,24 +733,36 @@ const TxInfo = ({ data, tacOperations, isLoading, socketStatus }: Props) => {
           </DetailedInfo.ItemLabel>
           <DetailedInfo.ItemValue multiRow>
             { data.base_fee_per_gas && (
-              <Skeleton loading={ isLoading }>
-                <span>Base: </span>
-                <span>{ BigNumber(data.base_fee_per_gas).dividedBy(WEI_IN_GWEI).toFixed() }</span>
-                { (data.max_fee_per_gas || data.max_priority_fee_per_gas) && <TextSeparator/> }
-              </Skeleton>
+              <NativeCoinValue
+                amount={ data.base_fee_per_gas }
+                units="gwei"
+                unitsTooltip="wei"
+                noSymbol
+                loading={ isLoading }
+                startElement="Base: "
+                endElement={ (data.max_fee_per_gas || data.max_priority_fee_per_gas) && <TextSeparator/> }
+              />
             ) }
             { data.max_fee_per_gas && (
-              <Skeleton loading={ isLoading }>
-                <span>Max: </span>
-                <span>{ BigNumber(data.max_fee_per_gas).dividedBy(WEI_IN_GWEI).toFixed() }</span>
-                { data.max_priority_fee_per_gas && <TextSeparator/> }
-              </Skeleton>
+              <NativeCoinValue
+                amount={ data.max_fee_per_gas }
+                units="gwei"
+                unitsTooltip="wei"
+                noSymbol
+                loading={ isLoading }
+                startElement="Max: "
+                endElement={ data.max_priority_fee_per_gas && <TextSeparator/> }
+              />
             ) }
             { data.max_priority_fee_per_gas && (
-              <Skeleton loading={ isLoading }>
-                <span>Max priority: </span>
-                <span>{ BigNumber(data.max_priority_fee_per_gas).dividedBy(WEI_IN_GWEI).toFixed() }</span>
-              </Skeleton>
+              <NativeCoinValue
+                amount={ data.max_priority_fee_per_gas }
+                units="gwei"
+                unitsTooltip="wei"
+                noSymbol
+                loading={ isLoading }
+                startElement="Max priority: "
+              />
             ) }
           </DetailedInfo.ItemValue>
         </>
@@ -801,12 +794,11 @@ const TxInfo = ({ data, tacOperations, isLoading, socketStatus }: Props) => {
               >
                 L1 gas price
               </DetailedInfo.ItemLabel>
-              <DetailedInfo.ItemValue multiRow>
-                <Text mr={ 1 }>
-                  { BigNumber(data.l1_gas_price).dividedBy(WEI).toFixed() } { rollupFeature.parentChain.currency?.symbol || currencyUnits.ether }
-                </Text>
-                <Text color="text.secondary">({ BigNumber(data.l1_gas_price).dividedBy(WEI_IN_GWEI).toFixed() } { currencyUnits.gwei })</Text>
-              </DetailedInfo.ItemValue>
+              <GasPriceValue
+                amount={ data.l1_gas_price }
+                asset={ rollupFeature.parentChain.currency?.symbol || currencyUnits.ether }
+                loading={ isLoading }
+              />
             </>
           ) }
 
@@ -819,15 +811,13 @@ const TxInfo = ({ data, tacOperations, isLoading, socketStatus }: Props) => {
               >
                 L1 fee
               </DetailedInfo.ItemLabel>
-              <DetailedInfo.ItemValue multiRow>
-                <CurrencyValue
-                  value={ data.l1_fee }
-                  currency={ rollupFeature.parentChain.currency?.symbol || currencyUnits.ether }
-                  exchangeRate={ data.exchange_rate }
-                  flexWrap="wrap"
-                  rowGap={ 0 }
-                />
-              </DetailedInfo.ItemValue>
+              <DetailedInfoNativeCoinValue
+                amount={ data.l1_fee }
+                asset={ rollupFeature.parentChain.currency?.symbol || currencyUnits.ether }
+                decimals={ rollupFeature.parentChain.currency?.decimals ?? config.chain.currency.decimals }
+                exchangeRate={ data.exchange_rate }
+                loading={ isLoading }
+              />
             </>
           ) }
 
@@ -864,15 +854,12 @@ const TxInfo = ({ data, tacOperations, isLoading, socketStatus }: Props) => {
                 >
                   Blob fee
                 </DetailedInfo.ItemLabel>
-                <DetailedInfo.ItemValue>
-                  <CurrencyValue
-                    value={ BigNumber(data.blob_gas_used).multipliedBy(data.blob_gas_price).toString() }
-                    currency={ config.UI.views.tx.hiddenFields?.fee_currency ? '' : currencyUnits.ether }
-                    exchangeRate={ data.exchange_rate }
-                    flexWrap="wrap"
-                    isLoading={ isLoading }
-                  />
-                </DetailedInfo.ItemValue>
+                <DetailedInfoNativeCoinValue
+                  amount={ BigNumber(data.blob_gas_used).multipliedBy(data.blob_gas_price).toString() }
+                  noSymbol={ config.UI.views.tx.hiddenFields?.fee_currency }
+                  exchangeRate={ data.exchange_rate }
+                  loading={ isLoading }
+                />
               </>
             ) }
 
@@ -898,14 +885,26 @@ const TxInfo = ({ data, tacOperations, isLoading, socketStatus }: Props) => {
                 </DetailedInfo.ItemLabel>
                 <DetailedInfo.ItemValue>
                   { data.blob_gas_price && (
-                    <Text fontWeight="600" as="span">{ BigNumber(data.blob_gas_price).dividedBy(WEI_IN_GWEI).toFixed() }</Text>
+                    <NativeCoinValue
+                      amount={ data.blob_gas_price }
+                      units="gwei"
+                      unitsTooltip="wei"
+                      noSymbol
+                      loading={ isLoading }
+                      fontWeight="600"
+                    />
                   ) }
                   { (data.max_fee_per_blob_gas && data.blob_gas_price) && <TextSeparator/> }
                   { data.max_fee_per_blob_gas && (
-                    <>
-                      <Text as="span" fontWeight="500" whiteSpace="pre">Max: </Text>
-                      <Text fontWeight="600" as="span">{ BigNumber(data.max_fee_per_blob_gas).dividedBy(WEI_IN_GWEI).toFixed() }</Text>
-                    </>
+                    <NativeCoinValue
+                      amount={ data.max_fee_per_blob_gas }
+                      units="gwei"
+                      unitsTooltip="wei"
+                      noSymbol
+                      loading={ isLoading }
+                      startElement="Max: "
+                      fontWeight="600"
+                    />
                   ) }
                 </DetailedInfo.ItemValue>
               </>

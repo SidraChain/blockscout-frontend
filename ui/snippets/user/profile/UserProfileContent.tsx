@@ -12,7 +12,7 @@ import shortenString from 'lib/shortenString';
 import { Button } from 'toolkit/chakra/button';
 import { Link } from 'toolkit/chakra/link';
 import { Hint } from 'toolkit/components/Hint/Hint';
-import TruncatedValue from 'ui/shared/TruncatedValue';
+import { TruncatedText } from 'toolkit/components/truncation/TruncatedText';
 import useLogout from 'ui/snippets/auth/useLogout';
 
 import UserWalletAutoConnectAlert from '../UserWalletAutoConnectAlert';
@@ -33,22 +33,22 @@ const navLinks: Array<NavLink> = [
   {
     text: 'Private tags',
     href: route({ pathname: '/account/tag-address' }),
-    icon: 'private_tags_slim' as const,
+    icon: 'private_tags' as const,
   },
   {
     text: 'API keys',
     href: route({ pathname: '/account/api-key' }),
-    icon: 'API_slim' as const,
+    icon: 'API' as const,
   },
   {
     text: 'Custom ABI',
     href: route({ pathname: '/account/custom-abi' }),
-    icon: 'ABI_slim' as const,
+    icon: 'ABI' as const,
   },
   config.features.addressVerification.isEnabled && {
     text: 'Verified addrs',
     href: route({ pathname: '/account/verified-addresses' }),
-    icon: 'verified_slim' as const,
+    icon: 'verified' as const,
   },
 ].filter(Boolean);
 
@@ -107,7 +107,7 @@ const UserProfileContent = ({ data, onClose, onLogin, onAddEmail, onAddAddress }
         <Flex p={ 2 } columnGap={ 4 }>
           <Box mr="auto">Email</Box>
           { data?.email ?
-            <TruncatedValue value={ data.email }/> : <Link onClick={ onAddEmail }>Add email</Link> }
+            <TruncatedText text={ data.email }/> : <Link onClick={ onAddEmail }>Add email</Link> }
         </Flex>
       </Box>
 

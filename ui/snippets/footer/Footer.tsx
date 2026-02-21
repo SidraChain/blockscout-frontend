@@ -9,8 +9,10 @@ import config from 'configs/app';
 import type { ResourceError } from 'lib/api/resources';
 import useApiQuery from 'lib/api/useApiQuery';
 import useFetch from 'lib/hooks/useFetch';
+import useIssueUrl from 'lib/hooks/useIssueUrl';
 import { Link } from 'toolkit/chakra/link';
 import { Skeleton } from 'toolkit/chakra/skeleton';
+import { copy } from 'toolkit/utils/htmlEntities';
 import IconSvg from 'ui/shared/IconSvg';
 import { CONTENT_MAX_WIDTH } from 'ui/shared/layout/utils';
 import NetworkAddToWallet from 'ui/shared/NetworkAddToWallet';
@@ -33,25 +35,44 @@ const Footer = () => {
     },
   });
   const apiVersionUrl = getApiVersionUrl(backendVersionData?.backend_version);
+  const issueUrl = useIssueUrl(backendVersionData?.backend_version);
 
   const BLOCKSCOUT_LINKS = [
     {
       icon: 'edit' as const,
       iconSize: '16px',
-      text: 'Submit a ticket',
-      url: 'https://support.sidrachain.com/',
+      text: 'Submit an issue',
+      url: issueUrl,
     },
     {
       icon: 'social/git' as const,
       iconSize: '18px',
       text: 'Contribute',
-      url: 'https://github.com/sidrachain',
+      url: 'https://github.com/blockscout/blockscout',
     },
     {
       icon: 'social/twitter' as const,
       iconSize: '18px',
       text: 'X (ex-Twitter)',
-      url: 'https://x.com/sidrachain',
+      url: 'https://x.com/blockscout',
+    },
+    {
+      icon: 'social/discord' as const,
+      iconSize: '24px',
+      text: 'Discord',
+      url: 'https://discord.gg/blockscout',
+    },
+    {
+      icon: 'brands/blockscout' as const,
+      iconSize: '18px',
+      text: 'All chains',
+      url: 'https://www.blockscout.com/chains-and-projects',
+    },
+    {
+      icon: 'donate' as const,
+      iconSize: '20px',
+      text: 'Donate',
+      url: 'https://eth.blockscout.com/address/0xfB4aF6A8592041E9BcE186E5aC4BDbd2B137aD11',
     },
   ];
 
@@ -82,15 +103,17 @@ const Footer = () => {
   const renderNetworkInfo = React.useCallback((gridArea?: GridProps['gridArea']) => {
     return (
       <Flex
+        alignItems="center"
         gridArea={ gridArea }
         flexWrap="wrap"
-        columnGap={ 8 }
-        rowGap={ 6 }
+        justifyContent="flex-start"
+        columnGap={ 3 }
+        rowGap={ 2 }
         mb={{ base: 5, lg: 10 }}
         _empty={{ display: 'none' }}
       >
         { !config.UI.indexingAlert.intTxs.isHidden && <IntTxsIndexingStatus/> }
-        <NetworkAddToWallet/>
+        { !config.features.opSuperchain.isEnabled && <NetworkAddToWallet source="Footer"/> }
       </Flex>
     );
   }, []);
@@ -124,6 +147,9 @@ const Footer = () => {
               Frontend: { frontendLink }
             </Text>
           ) }
+          <Text>
+            Copyright { copy } Blockscout Limited 2023-{ (new Date()).getFullYear() }
+          </Text>
         </Box>
       </Box>
     );

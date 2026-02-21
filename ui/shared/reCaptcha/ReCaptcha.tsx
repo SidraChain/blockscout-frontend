@@ -17,7 +17,7 @@ const ReCaptchaInvisible = ({ onInitError, hideWarning = false }: Props, ref: Re
   const [ , setIsVisible ] = React.useState(false);
 
   const multichainContext = useMultichainContext();
-  const chainConfig = multichainContext?.chain.config || config;
+  const chainConfig = multichainContext?.chain.app_config || config;
 
   const handleChange = React.useCallback(() => {
     setAttempt(attempt + 1);
@@ -40,7 +40,7 @@ const ReCaptchaInvisible = ({ onInitError, hideWarning = false }: Props, ref: Re
     }
   }, [ ]);
 
-  if (!chainConfig.services.reCaptchaV2.siteKey) {
+  if (!chainConfig.services.reCaptchaV2.siteKey || config.app.isPrivateMode) {
     return null;
   }
 

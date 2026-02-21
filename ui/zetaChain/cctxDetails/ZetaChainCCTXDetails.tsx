@@ -5,14 +5,13 @@ import type { CrossChainTx } from '@blockscout/zetachain-cctx-types';
 
 import useApiQuery from 'lib/api/useApiQuery';
 import base64ToHex from 'lib/base64ToHex';
-import { currencyUnits } from 'lib/units';
 import { HOMEPAGE_STATS } from 'stubs/stats';
 import { CollapsibleDetails } from 'toolkit/chakra/collapsible';
 import { Skeleton } from 'toolkit/chakra/skeleton';
 import { SECOND } from 'toolkit/utils/consts';
 import CopyToClipboard from 'ui/shared/CopyToClipboard';
-import CurrencyValue from 'ui/shared/CurrencyValue';
 import * as DetailedInfo from 'ui/shared/DetailedInfo/DetailedInfo';
+import DetailedInfoNativeCoinValue from 'ui/shared/DetailedInfo/DetailedInfoNativeCoinValue';
 import DetailedInfoTimestamp from 'ui/shared/DetailedInfo/DetailedInfoTimestamp';
 import AddressEntityZetaChain from 'ui/shared/entities/address/AddressEntityZetaChain';
 import TxEntityZetaChainCC from 'ui/shared/entities/tx/TxEntityZetaChainCC';
@@ -112,17 +111,13 @@ const ZetaChainCCTXDetails = ({ data, isLoading }: Props) => {
       >
         Cross-chain fee
       </DetailedInfo.ItemLabel>
-      <DetailedInfo.ItemValue>
-        <CurrencyValue
-          value={ data.zeta_fees }
-          currency={ currencyUnits.ether }
-          exchangeRate={ statsQuery.data?.coin_price }
-          accuracy={ 4 }
-          accuracyUsd={ 2 }
-          flexWrap="wrap"
-          isLoading={ isLoading }
-        />
-      </DetailedInfo.ItemValue>
+      <DetailedInfoNativeCoinValue
+        amount={ data.zeta_fees }
+        exchangeRate={ statsQuery.data?.coin_price }
+        accuracy={ 4 }
+        noTooltip={ false }
+        loading={ isLoading }
+      />
       { data.relayed_message && (
         <>
           <DetailedInfo.ItemLabel
@@ -220,7 +215,7 @@ const ZetaChainCCTXDetails = ({ data, isLoading }: Props) => {
         <Grid templateColumns="20px 1fr" rowGap={ 6 } columnGap={ 2 } w="100%">
           { transactionsBefore.length > 0 && (
             <>
-              <IconSvg name="verification-steps/finalized" boxSize={ 5 } bg={{ _light: 'white', _dark: 'black' }} zIndex={ 1 } color="text.secondary"/>
+              <IconSvg name="verification-steps/finalized" boxSize={ 5 } bg="bg.primary" zIndex={ 1 } color="text.secondary"/>
               <VStack gap={ 2 } alignItems="flex-start">
                 { transactionsBefore.map((tx) => (
                   <ZetaChainCCTXDetailsRelatedTx
@@ -255,10 +250,10 @@ const ZetaChainCCTXDetails = ({ data, isLoading }: Props) => {
               <Flex
                 h="100%"
                 w="100%"
-                bg={{ _light: 'white', _dark: 'black' }}
+                bg="bg.primary"
                 zIndex={ 1 }
               >
-                <IconSvg name="interop_slim" boxSize={ 5 } bg={{ _light: 'white', _dark: 'black' }} zIndex={ 1 } color="text.secondary"/>
+                <IconSvg name="interop" boxSize={ 5 } bg="bg.primary" zIndex={ 1 } color="text.secondary"/>
               </Flex>
               <VStack gap={ 2 } alignItems="flex-start">
                 { transactionsAfter.map((tx) => (

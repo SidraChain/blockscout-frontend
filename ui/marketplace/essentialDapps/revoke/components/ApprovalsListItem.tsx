@@ -1,10 +1,8 @@
 import { Text } from '@chakra-ui/react';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
+import type { EssentialDappsChainConfig } from 'types/client/marketplace';
 import type { AllowanceType } from 'types/client/revoke';
-import type { ChainConfig } from 'types/multichain';
-
-import { route } from 'nextjs/routes';
 
 import dayjs from 'lib/date/dayjs';
 import { Button } from 'toolkit/chakra/button';
@@ -13,12 +11,13 @@ import AddressEntity from 'ui/shared/entities/address/AddressEntity';
 import TokenEntity from 'ui/shared/entities/token/TokenEntity';
 import ListItemMobileGrid from 'ui/shared/ListItemMobile/ListItemMobileGrid';
 import NumberEntity from 'ui/shared/NumberEntity';
+import Time from 'ui/shared/time/Time';
 
 import useRevoke from '../hooks/useRevoke';
 import formatAllowance from '../lib/formatAllowance';
 
 type Props = {
-  selectedChain: ChainConfig | undefined;
+  selectedChain: EssentialDappsChainConfig | undefined;
   approval: AllowanceType;
   isLoading?: boolean;
   isAddressMatch?: boolean;
@@ -39,12 +38,12 @@ export default function ApprovalsListItem({
 
   const handleRevoke = useCallback(async() => {
     setIsPending(true);
-    const success = await revoke(approval, Number(selectedChain?.config.chain.id));
+    const success = await revoke(approval, Number(selectedChain?.id));
     if (success) {
       hideApproval(approval);
     }
     setIsPending(false);
-  }, [ revoke, hideApproval, approval, selectedChain?.config.chain.id ]);
+  }, [ revoke, hideApproval, approval, selectedChain?.id ]);
 
   return (
     <ListItemMobileGrid.Container
@@ -73,7 +72,7 @@ export default function ApprovalsListItem({
           isLoading={ isLoading }
           noCopy
           jointSymbol
-          href={ selectedChain?.config.app.baseUrl + route({ pathname: '/token/[hash]', query: { hash: approval.address } }) }
+          chain={ selectedChain }
           link={{ noIcon: true, external: true }}
         />
         <AddressEntity
@@ -81,7 +80,7 @@ export default function ApprovalsListItem({
           truncation="constant"
           noIcon
           isLoading={ isLoading }
-          href={ selectedChain?.config.app.baseUrl + route({ pathname: '/address/[hash]', query: { hash: approval.address } }) }
+          chain={ selectedChain }
           link={{ noIcon: true, external: true }}
         />
       </ListItemMobileGrid.Value>
@@ -92,7 +91,7 @@ export default function ApprovalsListItem({
           truncation="constant"
           noIcon
           isLoading={ isLoading }
-          href={ selectedChain?.config.app.baseUrl + route({ pathname: '/address/[hash]', query: { hash: approval.spender } }) }
+          chain={ selectedChain }
           link={{ noIcon: true, external: true }}
         />
       </ListItemMobileGrid.Value>
@@ -121,7 +120,7 @@ export default function ApprovalsListItem({
       <ListItemMobileGrid.Label isLoading={ isLoading }>Last updated</ListItemMobileGrid.Label>
       <ListItemMobileGrid.Value color="inherit">
         <Skeleton loading={ isLoading } display="flex" flexDir="column" rowGap={ 2 }>
-          <Text>{ dayjs(approval.timestamp).format('lll') }</Text>
+          <Time timestamp={ approval.timestamp }/>
           <Text>{ dayjs(approval.timestamp).fromNow() }</Text>
         </Skeleton>
       </ListItemMobileGrid.Value>

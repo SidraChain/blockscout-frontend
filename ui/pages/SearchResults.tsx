@@ -52,6 +52,10 @@ const SearchResultsPageContent = () => {
   const marketplaceApps = useMarketplaceApps(debouncedSearchTerm);
   const settingsContext = useSettingsContext();
 
+  const handleNavigateToResults = React.useCallback((searchTerm: string) => {
+    handleSearchTermChange(searchTerm);
+  }, [ handleSearchTermChange ]);
+
   React.useEffect(() => {
     if (showContent) {
       return;
@@ -86,6 +90,14 @@ const SearchResultsPageContent = () => {
         case 'blob': {
           if (config.features.dataAvailability.isEnabled) {
             router.replace({ pathname: '/blobs/[hash]', query: { hash: redirectCheckQuery.data.parameter } });
+            return;
+          }
+          break;
+        }
+        case 'ens_domain': {
+          const feature = config.features.nameServices;
+          if (feature.isEnabled && feature.ens.isEnabled) {
+            router.replace({ pathname: '/name-services/domains/[name]', query: { name: redirectCheckQuery.data.parameter } });
             return;
           }
           break;
@@ -277,7 +289,7 @@ const SearchResultsPageContent = () => {
 
   return (
     <>
-      <HeaderMobile hideSearchButton/>
+      <HeaderMobile onGoToSearchResults={ handleNavigateToResults }/>
       <Layout.MainArea>
         <Layout.SideBar/>
         <Layout.MainColumn>

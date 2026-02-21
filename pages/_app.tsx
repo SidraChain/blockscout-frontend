@@ -16,6 +16,7 @@ import { RewardsContextProvider } from 'lib/contexts/rewards';
 import { SettingsContextProvider } from 'lib/contexts/settings';
 import { initGrowthBook } from 'lib/growthbook/init';
 import useLoadFeatures from 'lib/growthbook/useLoadFeatures';
+import usePageViewTracking from 'lib/monitoring/usePageViewTracking';
 import { clientConfig as rollbarConfig, Provider as RollbarProvider } from 'lib/rollbar';
 import { SocketProvider } from 'lib/socket/context';
 import { Provider as ChakraProvider } from 'toolkit/chakra/provider';
@@ -48,12 +49,29 @@ const ERROR_SCREEN_STYLES: HTMLChakraProps<'div'> = {
   p: { base: 4, lg: 0 },
 };
 
+const CONSOLE_SCAM_WARNING = `⚠️WARNING: Do not paste or execute any scripts here!
+Anyone asking you to run code here might be trying to scam you and steal your data.
+If you don't understand what this console is for, close it now and stay safe.`;
+
+const CONSOLE_SCAM_WARNING_DELAY_MS = 500;
+
 function MyApp({ Component, pageProps }: AppPropsWithLayout) {
 
   const growthBook = initGrowthBook(pageProps.uuid);
   useLoadFeatures(growthBook);
+  usePageViewTracking(pageProps.referrer);
 
   const queryClient = useQueryClientConfig();
+
+  React.useEffect(() => {
+    // after the app is rendered/hydrated, show the console scam warning
+    const timeoutId = window.setTimeout(() => {
+      // eslint-disable-next-line no-console
+      console.warn(CONSOLE_SCAM_WARNING);
+    }, CONSOLE_SCAM_WARNING_DELAY_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   const content = (() => {
     const getLayout = Component.getLayout ?? ((page) => <Layout>{ page }</Layout>);

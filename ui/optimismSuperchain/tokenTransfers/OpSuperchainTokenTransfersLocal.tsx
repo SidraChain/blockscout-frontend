@@ -5,7 +5,6 @@ import type { TokenType } from 'types/api/token';
 
 import { useMultichainContext } from 'lib/contexts/multichain';
 import useIsMobile from 'lib/hooks/useIsMobile';
-import { getChainDataForList } from 'lib/multichain/getChainDataForList';
 import ActionBar from 'ui/shared/ActionBar';
 import DataListDisplay from 'ui/shared/DataListDisplay';
 import PopoverFilter from 'ui/shared/filters/PopoverFilter';
@@ -27,7 +26,7 @@ const OpSuperchainTokenTransfersLocal = ({ query, typeFilter, onTokenTypesChange
 
   const isMobile = useIsMobile();
   const multichainContext = useMultichainContext();
-  const chainData = getChainDataForList(multichainContext);
+  const chainData = multichainContext?.chain;
 
   const actionBar = isMobile && (
     <ActionBar mt={ -6 }>
@@ -48,7 +47,7 @@ const OpSuperchainTokenTransfersLocal = ({ query, typeFilter, onTokenTypesChange
       <Box hideFrom="lg">
         { query.data?.items.map((item, index) => (
           <TokenTransfersListItem
-            key={ item.transaction_hash + item.log_index + (query.isPlaceholderData ? index : '') }
+            key={ item.transaction_hash + item.log_index + (query.isPlaceholderData ? index : '') + (chainData ? chainData.id : '') }
             isLoading={ query.isPlaceholderData }
             item={ item }
             chainData={ chainData }

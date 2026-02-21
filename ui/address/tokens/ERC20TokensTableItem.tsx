@@ -1,39 +1,59 @@
 import { Flex, HStack } from '@chakra-ui/react';
+import { BigNumber } from 'bignumber.js';
 import React from 'react';
 
-import type { AddressTokenBalance } from 'types/api/address';
+import type { AddressTokensErc20Item } from './types';
 
 import config from 'configs/app';
-import getCurrencyValue from 'lib/getCurrencyValue';
-import { Skeleton } from 'toolkit/chakra/skeleton';
+import multichainConfig from 'configs/multichain';
+import { getTokenTypeName } from 'lib/token/tokenTypes';
 import { TableCell, TableRow } from 'toolkit/chakra/table';
+import { Tag } from 'toolkit/chakra/tag';
 import AddressAddToWallet from 'ui/shared/address/AddressAddToWallet';
 import NativeTokenTag from 'ui/shared/celo/NativeTokenTag';
 import AddressEntity from 'ui/shared/entities/address/AddressEntity';
 import TokenEntity from 'ui/shared/entities/token/TokenEntity';
+import calculateUsdValue from 'ui/shared/value/calculateUsdValue';
+import SimpleValue from 'ui/shared/value/SimpleValue';
+import { DEFAULT_ACCURACY_USD } from 'ui/shared/value/utils';
 
-type Props = AddressTokenBalance & { isLoading: boolean };
+type Props = AddressTokensErc20Item & { isLoading: boolean; hasAdditionalTokenTypes?: boolean };
 
 const ERC20TokensTableItem = ({
   token,
   value,
+  chain_values: chainValues,
   isLoading,
+  hasAdditionalTokenTypes,
 }: Props) => {
 
   const {
-    valueStr: tokenQuantity,
-    usd: tokenValue,
-  } = getCurrencyValue({ value: value, exchangeRate: token.exchange_rate, decimals: token.decimals, accuracy: 8, accuracyUsd: 2 });
+    valueBn: tokenQuantity,
+    usdBn: tokenValue,
+  } = calculateUsdValue({ amount: value, exchangeRate: token.exchange_rate, decimals: token.decimals });
 
   const isNativeToken = config.UI.views.address.nativeTokenAddress &&
     token.address_hash.toLowerCase() === config.UI.views.address.nativeTokenAddress.toLowerCase();
 
+  const chainInfo = React.useMemo(() => {
+    if (!chainValues) {
+      return;
+    }
+
+    const chainId = Object.keys(chainValues)[0];
+    const chain = multichainConfig()?.chains.find((chain) => chain.id === chainId);
+    return chain;
+  }, [ chainValues ]);
+
+  const cellVerticalAlign = hasAdditionalTokenTypes ? 'top' : 'middle';
+
   return (
-    <TableRow role="group" >
-      <TableCell verticalAlign="middle">
+    <TableRow className="group" >
+      <TableCell verticalAlign={ cellVerticalAlign }>
         <HStack gap={ 2 }>
           <TokenEntity
             token={ token }
+            chain={ chainInfo }
             isLoading={ isLoading }
             noCopy
             jointSymbol
@@ -42,8 +62,9 @@ const ERC20TokensTableItem = ({
           />
           { isNativeToken && <NativeTokenTag/> }
         </HStack>
+        { hasAdditionalTokenTypes && <Tag loading={ isLoading } mt={ 2 }>{ getTokenTypeName(token.type) }</Tag> }
       </TableCell>
-      <TableCell verticalAlign="middle">
+      <TableCell verticalAlign={ cellVerticalAlign }>
         <Flex alignItems="center" width="150px" justifyContent="space-between">
           <AddressEntity
             address={{ hash: token.address_hash }}
@@ -54,20 +75,33 @@ const ERC20TokensTableItem = ({
           <AddressAddToWallet token={ token } ml={ 4 } isLoading={ isLoading } opacity="0" _groupHover={{ opacity: 1 }}/>
         </Flex>
       </TableCell>
-      <TableCell isNumeric verticalAlign="middle">
-        <Skeleton loading={ isLoading } display="inline-block" color={ isNativeToken ? 'text.secondary' : undefined }>
-          { token.exchange_rate && `$${ Number(token.exchange_rate).toLocaleString() }` }
-        </Skeleton>
+      <TableCell isNumeric verticalAlign={ cellVerticalAlign }>
+        { token.exchange_rate ? (
+          <SimpleValue
+            value={ BigNumber(token.exchange_rate) }
+            prefix="$"
+            loading={ isLoading }
+            color={ isNativeToken ? 'text.secondary' : undefined }
+          />
+        ) : null }
       </TableCell>
-      <TableCell isNumeric verticalAlign="middle">
-        <Skeleton loading={ isLoading } display="inline" color={ isNativeToken ? 'text.secondary' : undefined }>
-          { tokenQuantity }
-        </Skeleton>
+      <TableCell isNumeric verticalAlign={ cellVerticalAlign }>
+        <SimpleValue
+          value={ tokenQuantity }
+          color={ isNativeToken ? 'text.secondary' : undefined }
+          loading={ isLoading }
+        />
       </TableCell>
-      <TableCell isNumeric verticalAlign="middle">
-        <Skeleton loading={ isLoading } display="inline" color={ isNativeToken ? 'text.secondary' : undefined }>
-          { tokenValue && `$${ tokenValue }` }
-        </Skeleton>
+      <TableCell isNumeric verticalAlign={ cellVerticalAlign }>
+        { token.exchange_rate && (
+          <SimpleValue
+            value={ tokenValue }
+            prefix="$"
+            color={ isNativeToken ? 'text.secondary' : undefined }
+            loading={ isLoading }
+            accuracy={ DEFAULT_ACCURACY_USD }
+          />
+        ) }
       </TableCell>
     </TableRow>
   );

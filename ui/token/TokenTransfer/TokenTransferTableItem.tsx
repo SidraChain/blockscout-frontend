@@ -3,18 +3,20 @@ import React from 'react';
 
 import type { TokenInstance } from 'types/api/token';
 import type { TokenTransfer } from 'types/api/tokenTransfer';
+import type { ClusterChainConfig } from 'types/multichain';
 
-import getCurrencyValue from 'lib/getCurrencyValue';
-import { NFT_TOKEN_TYPE_IDS } from 'lib/token/tokenTypes';
+import { hasTokenTransferValue, NFT_TOKEN_TYPE_IDS } from 'lib/token/tokenTypes';
 import { Badge } from 'toolkit/chakra/badge';
 import { Skeleton } from 'toolkit/chakra/skeleton';
 import { TableCell, TableRow } from 'toolkit/chakra/table';
 import AddressFromTo from 'ui/shared/address/AddressFromTo';
 import NftEntity from 'ui/shared/entities/nft/NftEntity';
 import TxEntity from 'ui/shared/entities/tx/TxEntity';
+import ChainIcon from 'ui/shared/externalChains/ChainIcon';
 import TimeWithTooltip from 'ui/shared/time/TimeWithTooltip';
+import AssetValue from 'ui/shared/value/AssetValue';
 
-type Props = TokenTransfer & { tokenId?: string; isLoading?: boolean; instance?: TokenInstance };
+type Props = TokenTransfer & { tokenId?: string; isLoading?: boolean; instance?: TokenInstance; chainData?: ClusterChainConfig };
 
 const TokenTransferTableItem = ({
   token,
@@ -27,17 +29,16 @@ const TokenTransferTableItem = ({
   tokenId,
   isLoading,
   instance,
+  chainData,
 }: Props) => {
-  const { usd, valueStr } = total && 'value' in total && total.value !== null ? getCurrencyValue({
-    value: total.value,
-    exchangeRate: token?.exchange_rate,
-    accuracy: 8,
-    accuracyUsd: 2,
-    decimals: total.decimals || '0',
-  }) : { usd: null, valueStr: null };
 
   return (
     <TableRow alignItems="top">
+      { chainData && (
+        <TableCell>
+          <ChainIcon data={ chainData } isLoading={ isLoading } my="5px"/>
+        </TableCell>
+      ) }
       <TableCell>
         <Flex flexDirection="column" alignItems="flex-start" mt="5px" rowGap={ 3 }>
           { txHash ? (
@@ -91,18 +92,17 @@ const TokenTransferTableItem = ({
           }
         </TableCell>
       ) }
-      { token && (token.type === 'ERC-20' || token.type === 'ERC-1155' || token.type === 'ERC-404') && (
+      { token && (hasTokenTransferValue(token.type)) && (
         <TableCell isNumeric verticalAlign="top">
-          { valueStr && (
-            <Skeleton loading={ isLoading } display="inline-block" mt="7px" wordBreak="break-all">
-              { valueStr }
-            </Skeleton>
-          ) }
-          { usd && (
-            <Skeleton loading={ isLoading } color="text.secondary" mt="10px" wordBreak="break-all">
-              <span>${ usd }</span>
-            </Skeleton>
-          ) }
+          <AssetValue
+            amount={ total && 'value' in total ? total.value : null }
+            decimals={ total && 'decimals' in total ? total.decimals || '0' : '0' }
+            exchangeRate={ token?.exchange_rate }
+            loading={ isLoading }
+            layout="vertical"
+            mt="7px"
+            rowGap="10px"
+          />
         </TableCell>
       ) }
     </TableRow>

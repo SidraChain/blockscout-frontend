@@ -51,6 +51,7 @@ Type extends EventTypes.ADD_TO_WALLET ? (
   {
     Wallet: WalletType;
     Target: 'network';
+    Source: 'Footer' | 'Top bar' | 'Chain widget';
   } | {
     Wallet: WalletType;
     Target: 'token';
@@ -146,6 +147,10 @@ Type extends EventTypes.PAGE_WIDGET ? (
     Type: 'Chain switch';
     Info: string;
     Source: 'Revoke essential dapp';
+  } | {
+    Type: 'Txn view switch';
+    Info: 'Table view' | 'List view';
+    Source: 'Address page';
   }
 ) :
 Type extends EventTypes.TX_INTERPRETATION_INTERACTION ? {

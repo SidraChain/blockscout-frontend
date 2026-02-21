@@ -1,11 +1,10 @@
 import React from 'react';
 
 import type { UserOpsItem } from 'types/api/userOps';
-import type { ChainConfig } from 'types/multichain';
+import type { ClusterChainConfig } from 'types/multichain';
 
 import config from 'configs/app';
 import { useMultichainContext } from 'lib/contexts/multichain';
-import CurrencyValue from 'ui/shared/CurrencyValue';
 import AddressStringOrParam from 'ui/shared/entities/address/AddressStringOrParam';
 import BlockEntity from 'ui/shared/entities/block/BlockEntity';
 import TxEntity from 'ui/shared/entities/tx/TxEntity';
@@ -13,18 +12,19 @@ import UserOpEntity from 'ui/shared/entities/userOp/UserOpEntity';
 import ListItemMobileGrid from 'ui/shared/ListItemMobile/ListItemMobileGrid';
 import TimeWithTooltip from 'ui/shared/time/TimeWithTooltip';
 import UserOpStatus from 'ui/shared/userOps/UserOpStatus';
+import NativeCoinValue from 'ui/shared/value/NativeCoinValue';
 
 type Props = {
   item: UserOpsItem;
   isLoading?: boolean;
   showTx: boolean;
   showSender: boolean;
-  chainData?: ChainConfig;
+  chainData?: ClusterChainConfig;
 };
 
 const UserOpsListItem = ({ item, isLoading, showTx, showSender, chainData }: Props) => {
   const multichainContext = useMultichainContext();
-  const chainConfig = (multichainContext?.chain.config || config);
+  const chainConfig = (multichainContext?.chain.app_config || config);
 
   return (
     <ListItemMobileGrid.Container gridTemplateColumns="100px auto">
@@ -90,7 +90,10 @@ const UserOpsListItem = ({ item, isLoading, showTx, showSender, chainData }: Pro
         <>
           <ListItemMobileGrid.Label isLoading={ isLoading }>Fee</ListItemMobileGrid.Label>
           <ListItemMobileGrid.Value>
-            <CurrencyValue value={ item.fee } isLoading={ isLoading } accuracy={ 8 } currency={ chainConfig.chain.currency.symbol }/>
+            <NativeCoinValue
+              amount={ item.fee }
+              loading={ isLoading }
+            />
           </ListItemMobileGrid.Value>
         </>
       ) }

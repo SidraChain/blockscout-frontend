@@ -1,10 +1,11 @@
 import BigNumber from 'bignumber.js';
+import { mapValues } from 'es-toolkit';
 
 import type { AddressTokenBalance } from 'types/api/address';
-import type { TokenType } from 'types/api/token';
 
 import config from 'configs/app';
 import sumBnReducer from 'lib/bigint/sumBnReducer';
+import { isFungibleTokenType } from 'lib/token/tokenTypes';
 import { ZERO } from 'toolkit/utils/consts';
 
 const isNativeToken = (token: TokenEnhancedData) =>
@@ -13,11 +14,12 @@ const isNativeToken = (token: TokenEnhancedData) =>
 
 export type TokenEnhancedData = AddressTokenBalance & {
   usd?: BigNumber ;
+  chain_values?: Record<string, string>;
 };
 
 export type Sort = 'desc' | 'asc';
 
-export type TokenSelectData = Record<TokenType, TokenSelectDataItem>;
+export type TokenSelectData = Record<string, TokenSelectDataItem>;
 
 export interface TokenSelectDataItem {
   items: Array<TokenEnhancedData>;
@@ -26,10 +28,28 @@ export interface TokenSelectDataItem {
 
 type TokenGroup = [string, TokenSelectDataItem];
 
-const TOKEN_GROUPS_ORDER: Array<TokenType> = [ 'ERC-20', 'ERC-721', 'ERC-1155', 'ERC-404' ];
+const NFT_TOKEN_GROUPS_ORDER = [ 'ERC-721', 'ERC-1155', 'ERC-404' ] as const;
 
 export const sortTokenGroups = (groupA: TokenGroup, groupB: TokenGroup) => {
-  return TOKEN_GROUPS_ORDER.indexOf(groupA[0] as TokenType) > TOKEN_GROUPS_ORDER.indexOf(groupB[0] as TokenType) ? 1 : -1;
+  const additionalTypeIds = config.chain.additionalTokenTypes.map((item) => item.id);
+
+  const tokenGroupsOrder = [
+    'ERC-20',
+    ...additionalTypeIds,
+    ...NFT_TOKEN_GROUPS_ORDER,
+  ] as const;
+
+  const orderA = tokenGroupsOrder.indexOf(groupA[0] as (typeof tokenGroupsOrder)[number]);
+  const orderB = tokenGroupsOrder.indexOf(groupB[0] as (typeof tokenGroupsOrder)[number]);
+
+  const normalizedA = orderA === -1 ? 999 : orderA;
+  const normalizedB = orderB === -1 ? 999 : orderB;
+
+  if (normalizedA !== normalizedB) {
+    return normalizedA > normalizedB ? 1 : -1;
+  }
+
+  return groupA[0].localeCompare(groupB[0]);
 };
 
 const sortErc1155or404Tokens = (sort: Sort) => (dataA: AddressTokenBalance, dataB: AddressTokenBalance) => {
@@ -72,6 +92,10 @@ export const sortingFns = {
   'ERC-404': sortErc1155or404Tokens,
 };
 
+export const getSortingFn = (typeId: string) => {
+  return sortingFns[typeId as keyof typeof sortingFns] || sortErc20Tokens;
+};
+
 export const filterTokens = (searchTerm: string) => ({ token }: AddressTokenBalance) => {
   if (!token.name) {
     return !searchTerm ? true : token.address_hash.toLowerCase().includes(searchTerm);
@@ -81,7 +105,9 @@ export const filterTokens = (searchTerm: string) => ({ token }: AddressTokenBala
 };
 
 export const calculateUsdValue = (data: AddressTokenBalance): TokenEnhancedData => {
-  if (data.token.type !== 'ERC-20') {
+  const isFungibleToken = isFungibleTokenType(data.token.type);
+
+  if (!isFungibleToken) {
     return data;
   }
 
@@ -97,7 +123,13 @@ export const calculateUsdValue = (data: AddressTokenBalance): TokenEnhancedData 
   };
 };
 
-export const getTokensTotalInfo = (data: TokenSelectData) => {
+export interface TokensTotalInfo {
+  usd: BigNumber;
+  num: number;
+  isOverflow: boolean;
+}
+
+export const getTokensTotalInfo = (data: TokenSelectData): TokensTotalInfo => {
   const usd = Object.values(data)
     .map(({ items }) => items.filter((item) => !isNativeToken(item)).reduce(usdValueReducer, ZERO))
     .reduce(sumBnReducer, ZERO);
@@ -109,6 +141,19 @@ export const getTokensTotalInfo = (data: TokenSelectData) => {
   const isOverflow = Object.values(data).some(({ isOverflow }) => isOverflow);
 
   return { usd, num, isOverflow };
+};
+
+export const getTokensTotalInfoByChain = (data: TokenSelectData, chainIds: Array<string>) => {
+  return chainIds.reduce((result, chainId) => {
+    const filteredData = mapValues(data, (item) => ({
+      ...item,
+      items: item.items.filter((item) => item.chain_values?.[chainId]),
+    }));
+
+    result[chainId] = getTokensTotalInfo(filteredData);
+
+    return result;
+  }, {} as Record<string, TokensTotalInfo>);
 };
 
 const usdValueReducer = (result: BigNumber, item: TokenEnhancedData) => !item.usd ? result : result.plus(BigNumber(item.usd));

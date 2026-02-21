@@ -4,11 +4,12 @@ import type { TokenInfo, TokenInstance } from 'types/api/token';
 import type { TokenTransfer } from 'types/api/tokenTransfer';
 
 import { AddressHighlightProvider } from 'lib/contexts/addressHighlight';
-import { NFT_TOKEN_TYPE_IDS } from 'lib/token/tokenTypes';
+import { useMultichainContext } from 'lib/contexts/multichain';
+import { hasTokenIds, hasTokenTransferValue, NFT_TOKEN_TYPE_IDS } from 'lib/token/tokenTypes';
 import { TableBody, TableColumnHeader, TableHeaderSticky, TableRoot, TableRow } from 'toolkit/chakra/table';
+import { TruncatedText } from 'toolkit/components/truncation/TruncatedText';
 import * as SocketNewItemsNotice from 'ui/shared/SocketNewItemsNotice';
 import TimeFormatToggle from 'ui/shared/time/TimeFormatToggle';
-import TruncatedValue from 'ui/shared/TruncatedValue';
 import TokenTransferTableItem from 'ui/token/TokenTransfer/TokenTransferTableItem';
 
 interface Props {
@@ -24,7 +25,8 @@ interface Props {
 }
 
 const TokenTransferTable = ({ data, top, showSocketInfo, showSocketErrorAlert, socketInfoNum, tokenId, isLoading, token, instance }: Props) => {
-
+  const multichainContext = useMultichainContext();
+  const chainData = multichainContext?.chain;
   const tokenType = token.type;
 
   return (
@@ -32,6 +34,7 @@ const TokenTransferTable = ({ data, top, showSocketInfo, showSocketErrorAlert, s
       <TableRoot minW="950px">
         <TableHeaderSticky top={ top }>
           <TableRow>
+            { chainData && <TableColumnHeader width="38px"/> }
             <TableColumnHeader width="280px">
               Txn hash
               <TimeFormatToggle/>
@@ -39,11 +42,11 @@ const TokenTransferTable = ({ data, top, showSocketInfo, showSocketErrorAlert, s
             <TableColumnHeader width="200px">Method</TableColumnHeader>
             <TableColumnHeader width={{ lg: '224px', xl: '380px' }}>From/To</TableColumnHeader>
             { (NFT_TOKEN_TYPE_IDS.includes(tokenType)) &&
-              <TableColumnHeader width={ tokenType === 'ERC-1155' || tokenType === 'ERC-404' ? '50%' : '100%' }>Token ID</TableColumnHeader>
+              <TableColumnHeader width={ hasTokenIds(tokenType) ? '50%' : '100%' }>Token ID</TableColumnHeader>
             }
-            { (tokenType === 'ERC-20' || tokenType === 'ERC-1155' || tokenType === 'ERC-404') && (
+            { hasTokenTransferValue(tokenType) && (
               <TableColumnHeader width={ tokenType === 'ERC-20' ? '100%' : '50%' } isNumeric>
-                <TruncatedValue value={ `Value ${ token?.symbol || '' }` } w="100%" verticalAlign="middle"/>
+                <TruncatedText text={ `Value ${ token?.symbol || '' }` } w="100%" verticalAlign="middle"/>
               </TableColumnHeader>
             ) }
           </TableRow>
@@ -64,6 +67,7 @@ const TokenTransferTable = ({ data, top, showSocketInfo, showSocketErrorAlert, s
               tokenId={ tokenId }
               instance={ instance }
               isLoading={ isLoading }
+              chainData={ chainData }
             />
           )) }
         </TableBody>

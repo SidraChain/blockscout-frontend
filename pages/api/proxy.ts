@@ -4,16 +4,23 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import fetchFactory from 'nextjs/utils/fetchProxy';
 
 import appConfig from 'configs/app';
+import isNeedProxy from 'lib/api/isNeedProxy';
 
 const handler = async(nextReq: NextApiRequest, nextRes: NextApiResponse) => {
+
+  if (!isNeedProxy()) {
+    nextRes.status(404).json({ error: 'Not found' });
+    return;
+  }
+
   if (!nextReq.url) {
-    nextRes.status(500).json({ error: 'no url provided' });
+    nextRes.status(500).json({ error: 'No url provided' });
     return;
   }
 
   const url = new URL(
     nextReq.url.replace(/^\/node-api\/proxy/, ''),
-    nextReq.headers['x-endpoint']?.toString() || appConfig.apis.general.endpoint,
+    nextReq.headers['x-endpoint']?.toString() || appConfig.apis.general?.endpoint,
   );
   const apiRes = await fetchFactory(nextReq)(
     url.toString(),
@@ -28,6 +35,7 @@ const handler = async(nextReq: NextApiRequest, nextRes: NextApiResponse) => {
     'x-ratelimit-limit',
     'x-ratelimit-remaining',
     'x-ratelimit-reset',
+    'api-v2-temp-token',
   ];
 
   HEADERS_TO_PROXY.forEach((header) => {

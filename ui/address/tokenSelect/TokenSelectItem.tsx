@@ -2,14 +2,16 @@ import { chakra, Flex } from '@chakra-ui/react';
 import BigNumber from 'bignumber.js';
 import React from 'react';
 
-import { route } from 'nextjs-routes';
+import { route } from 'nextjs/routes';
 
 import config from 'configs/app';
-import getCurrencyValue from 'lib/getCurrencyValue';
+import multichainConfig from 'configs/multichain';
+import { isFungibleTokenType } from 'lib/token/tokenTypes';
 import { Link } from 'toolkit/chakra/link';
+import { TruncatedText } from 'toolkit/components/truncation/TruncatedText';
 import NativeTokenTag from 'ui/shared/celo/NativeTokenTag';
 import TokenEntity from 'ui/shared/entities/token/TokenEntity';
-import TruncatedValue from 'ui/shared/TruncatedValue';
+import calculateUsdValue from 'ui/shared/value/calculateUsdValue';
 
 import type { TokenEnhancedData } from '../utils/tokenUtils';
 
@@ -22,22 +24,35 @@ const TokenSelectItem = ({ data }: Props) => {
   const isNativeToken = config.UI.views.address.nativeTokenAddress &&
     data.token.address_hash.toLowerCase() === config.UI.views.address.nativeTokenAddress.toLowerCase();
 
-  const secondRow = (() => {
-    switch (data.token.type) {
-      case 'ERC-20': {
-        const tokenDecimals = Number(data.token.decimals ?? 18);
-        const text = `${ BigNumber(data.value).dividedBy(10 ** tokenDecimals).dp(8).toFormat() } ${ data.token.symbol || '' }`;
+  const chain = React.useMemo(() => {
+    if (!data.chain_values) {
+      return;
+    }
 
-        return (
-          <>
-            <TruncatedValue value={ text }/>
-            { data.token.exchange_rate && <chakra.span ml={ 2 }>@{ Number(data.token.exchange_rate).toLocaleString() }</chakra.span> }
-          </>
-        );
-      }
+    const chainId = Object.keys(data.chain_values)[0];
+    const chain = multichainConfig()?.chains.find((chain) => chain.id === chainId);
+    return chain;
+  }, [ data.chain_values ]);
+
+  const secondRow = (() => {
+    const isFungibleToken = isFungibleTokenType(data.token.type);
+
+    if (isFungibleToken) {
+      const tokenDecimals = Number(data.token.decimals ?? 18);
+      const text = `${ BigNumber(data.value).dividedBy(10 ** tokenDecimals).dp(8).toFormat() } ${ data.token.symbol || '' }`;
+
+      return (
+        <>
+          <TruncatedText text={ text }/>
+          { data.token.exchange_rate && <chakra.span ml={ 2 }>@{ Number(data.token.exchange_rate).toLocaleString() }</chakra.span> }
+        </>
+      );
+    }
+
+    switch (data.token.type) {
       case 'ERC-721': {
         const text = `${ BigNumber(data.value).toFormat() } ${ data.token.symbol || '' }`;
-        return <TruncatedValue value={ text }/>;
+        return <TruncatedText text={ text }/>;
       }
       case 'ERC-1155': {
         return (
@@ -62,7 +77,7 @@ const TokenSelectItem = ({ data }: Props) => {
             { data.value !== null && (
               <span>
                 { data.token.decimals ?
-                  getCurrencyValue({ value: data.value, decimals: data.token.decimals, accuracy: 2 }).valueStr :
+                  calculateUsdValue({ amount: data.value, decimals: data.token.decimals }).valueStr :
                   BigNumber(data.value).toFormat()
                 }
               </span>
@@ -73,7 +88,7 @@ const TokenSelectItem = ({ data }: Props) => {
     }
   })();
 
-  const url = route({ pathname: '/token/[hash]', query: { hash: data.token.address_hash } });
+  const url = route({ pathname: '/token/[hash]', query: { hash: data.token.address_hash } }, { chain });
 
   return (
     <Link
@@ -91,9 +106,10 @@ const TokenSelectItem = ({ data }: Props) => {
       fontSize="sm"
       href={ url }
     >
-      <Flex alignItems="center" w="100%" overflow="hidden">
+      <Flex alignItems="center" w="100%">
         <TokenEntity
           token={ data.token }
+          chain={ chain }
           noSymbol
           noCopy
           noLink
@@ -103,8 +119,8 @@ const TokenSelectItem = ({ data }: Props) => {
         />
         { isNativeToken && <NativeTokenTag mr={ 2 }/> }
         { data.usd && (
-          <TruncatedValue
-            value={ `$${ data.usd.toFormat(2) }` }
+          <TruncatedText
+            text={ `$${ data.usd.toFormat(2) }` }
             fontWeight={ 700 }
             minW="120px"
             ml="auto"

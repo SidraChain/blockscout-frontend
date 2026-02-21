@@ -4,10 +4,9 @@ import React from 'react';
 import { MultichainProvider } from 'lib/contexts/multichain';
 import useIsMobile from 'lib/hooks/useIsMobile';
 import { FilterInput } from 'toolkit/components/filters/FilterInput';
-import { apos } from 'toolkit/utils/htmlEntities';
+import ChainSelect from 'ui/optimismSuperchain/components/ChainSelect';
 import ActionBar from 'ui/shared/ActionBar';
 import DataListDisplay from 'ui/shared/DataListDisplay';
-import ChainSelect from 'ui/shared/multichain/ChainSelect';
 import PageTitle from 'ui/shared/Page/PageTitle';
 import Pagination from 'ui/shared/pagination/Pagination';
 import Sort from 'ui/shared/sort/Sort';
@@ -95,17 +94,18 @@ const OpSuperchainVerifiedContracts = () => {
       <ChainSelect
         value={ chainValue }
         onValueChange={ onChainValueChange }
+        mode="default"
         mb={ 3 }
       />
-      <MultichainProvider chainSlug={ chainValue?.[0] }>
+      <MultichainProvider chainId={ chainValue?.[0] }>
         <VerifiedContractsCounters/>
         <DataListDisplay
           isError={ isError }
           itemsNum={ data?.items.length }
           emptyText="There are no verified contracts."
-          filterProps={{
-            emptyFilteredText: `Couldn${ apos }t find any contract that matches your query.`,
-            hasActiveFilters: Boolean(searchTerm || type),
+          hasActiveFilters={ Boolean(searchTerm || type) }
+          emptyStateProps={{
+            term: 'contract',
           }}
           actionBar={ actionBar }
         >

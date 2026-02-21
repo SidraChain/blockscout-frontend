@@ -1,37 +1,27 @@
-import { Flex } from '@chakra-ui/react';
 import React from 'react';
 
 import type { TokenTransfer } from 'types/api/tokenTransfer';
-import type { ChainConfig } from 'types/multichain';
+import type { ClusterChainConfig } from 'types/multichain';
 
-import getCurrencyValue from 'lib/getCurrencyValue';
 import { NFT_TOKEN_TYPE_IDS } from 'lib/token/tokenTypes';
 import { Badge } from 'toolkit/chakra/badge';
 import { Skeleton } from 'toolkit/chakra/skeleton';
 import { TableCell, TableRow } from 'toolkit/chakra/table';
-import ChainIcon from 'ui/optimismSuperchain/components/ChainIcon';
 import AddressFromTo from 'ui/shared/address/AddressFromTo';
 import BlockEntity from 'ui/shared/entities/block/BlockEntity';
 import NftEntity from 'ui/shared/entities/nft/NftEntity';
-import TokenEntity from 'ui/shared/entities/token/TokenEntity';
 import TxEntity from 'ui/shared/entities/tx/TxEntity';
+import ChainIcon from 'ui/shared/externalChains/ChainIcon';
 import TimeWithTooltip from 'ui/shared/time/TimeWithTooltip';
+import TokenValue from 'ui/shared/value/TokenValue';
 
 type Props = {
   item: TokenTransfer;
   isLoading?: boolean;
-  chainData?: ChainConfig;
+  chainData?: ClusterChainConfig;
 };
 
 const TokenTransferTableItem = ({ item, isLoading, chainData }: Props) => {
-  const { valueStr } = item.total && 'value' in item.total && item.total.value !== null ? getCurrencyValue({
-    value: item.total.value,
-    exchangeRate: item.token?.exchange_rate,
-    accuracy: 8,
-    accuracyUsd: 2,
-    decimals: item.total.decimals || '0',
-  }) : { valueStr: null };
-
   return (
     <TableRow>
       { chainData && (
@@ -87,22 +77,17 @@ const TokenTransferTableItem = ({ item, isLoading, chainData }: Props) => {
         ) : <Skeleton loading={ isLoading }>-</Skeleton> }
       </TableCell>
       <TableCell isNumeric verticalAlign="top">
-        { (item.token && valueStr) ? (
-          <Flex gap={ 2 } overflow="hidden" justifyContent="flex-end">
-            <Skeleton loading={ isLoading } wordBreak="break-all">
-              { valueStr }
-            </Skeleton>
-            <TokenEntity
+        { item.token && item.total && 'value' in item.total && item.total.value !== null ?
+          (
+            <TokenValue
+              amount={ item.total.value }
               token={ item.token }
-              isLoading={ isLoading }
-              onlySymbol
-              noCopy
-              width="auto"
-              minW="auto"
-              maxW="100px"
+              decimals={ item.total.decimals || '0' }
+              layout="vertical"
+              loading={ isLoading }
             />
-          </Flex>
-        ) : <Skeleton loading={ isLoading }>-</Skeleton>
+          ) :
+          <Skeleton loading={ isLoading }>-</Skeleton>
         }
       </TableCell>
     </TableRow>

@@ -18,7 +18,7 @@ export default fixture;
 export const ENVS_MAP: Record<string, Array<[string, string]>> = {
   optimisticRollup: [
     [ 'NEXT_PUBLIC_ROLLUP_TYPE', 'optimistic' ],
-    [ 'NEXT_PUBLIC_ROLLUP_L1_BASE_URL', 'https://localhost:3101' ],
+    [ 'NEXT_PUBLIC_ROLLUP_PARENT_CHAIN', '{"id":11155111,"name":"Sepolia","baseUrl":"https://localhost:3101","rpcUrls":["https://localhost:3101"],"currency":{"name":"Ether","symbol":"ETH","decimals":18},"isTestnet":true}' ],
     [ 'NEXT_PUBLIC_ROLLUP_L2_WITHDRAWAL_URL', 'https://localhost:3102' ],
     [ 'NEXT_PUBLIC_FAULT_PROOF_ENABLED', 'true' ],
     [ 'NEXT_PUBLIC_ROLLUP_DA_CELESTIA_CELENIUM_URL', 'https://mocha.celenium.io/blob' ],
@@ -114,7 +114,10 @@ export const ENVS_MAP: Record<string, Array<[string, string]>> = {
     [ 'NEXT_PUBLIC_CELO_ENABLED', 'true' ],
   ],
   opSuperchain: [
-    [ 'NEXT_PUBLIC_OP_SUPERCHAIN_ENABLED', 'true' ],
+    [ 'NEXT_PUBLIC_MULTICHAIN_ENABLED', 'true' ],
+    [ 'NEXT_PUBLIC_MULTICHAIN_CLUSTER', 'test' ],
+    [ 'NEXT_PUBLIC_MULTICHAIN_AGGREGATOR_API_HOST', 'http://localhost:3012' ],
+    [ 'NEXT_PUBLIC_MULTICHAIN_STATS_API_HOST', 'http://localhost:3013' ],
   ],
   clusters: [
     [ 'NEXT_PUBLIC_CLUSTERS_API_HOST', 'https://api.clusters.xyz' ],

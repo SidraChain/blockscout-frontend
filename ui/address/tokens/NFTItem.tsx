@@ -2,11 +2,10 @@ import { Flex, Text } from '@chakra-ui/react';
 import React from 'react';
 
 import type { AddressNFT } from 'types/api/address';
-import type { ChainConfig } from 'types/multichain';
+import type { ClusterChainConfig } from 'types/multichain';
 
-import { route } from 'nextjs-routes';
+import { route } from 'nextjs/routes';
 
-import getCurrencyValue from 'lib/getCurrencyValue';
 import { getTokenTypeName } from 'lib/token/tokenTypes';
 import { Link } from 'toolkit/chakra/link';
 import { Skeleton } from 'toolkit/chakra/skeleton';
@@ -14,15 +13,17 @@ import { Tag } from 'toolkit/chakra/tag';
 import NftEntity from 'ui/shared/entities/nft/NftEntity';
 import TokenEntity from 'ui/shared/entities/token/TokenEntity';
 import NftMedia from 'ui/shared/nft/NftMedia';
+import calculateUsdValue from 'ui/shared/value/calculateUsdValue';
 
 import NFTItemContainer from './NFTItemContainer';
 
-type Props = AddressNFT & { isLoading: boolean; withTokenLink?: boolean; chain?: ChainConfig };
+type Props = AddressNFT & { isLoading: boolean; withTokenLink?: boolean; chain?: ClusterChainConfig };
 
-const NFTItem = ({ token, value, isLoading, withTokenLink, chain, ...tokenInstance }: Props) => {
-  const valueResult = token.decimals && value ? getCurrencyValue({ value, decimals: token.decimals, accuracy: 2 }).valueStr : value;
+const NFTItem = ({ value, isLoading, withTokenLink, chain, ...tokenInstance }: Props) => {
+  const { token } = tokenInstance;
+  const valueResult = token.decimals && value ? calculateUsdValue({ amount: value, decimals: token.decimals, accuracy: 2 }).valueStr : value;
   const tokenInstanceLink = tokenInstance.id ?
-    route({ pathname: '/token/[hash]/instance/[id]', query: { hash: token.address_hash, id: tokenInstance.id } }) :
+    route({ pathname: '/token/[hash]/instance/[id]', query: { hash: token.address_hash, id: tokenInstance.id } }, chain ? { chain } : undefined) :
     undefined;
 
   return (

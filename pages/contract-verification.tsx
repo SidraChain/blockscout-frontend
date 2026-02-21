@@ -1,14 +1,19 @@
-import type { GetServerSideProps, NextPage } from 'next';
+import type { NextPage } from 'next';
+import React from 'react';
 
-const Page: NextPage = () => null;
+import type { Props } from 'nextjs/getServerSideProps/handlers';
+import PageNextJs from 'nextjs/PageNextJs';
+
+import ContractVerification from 'ui/pages/ContractVerification';
+
+const Page: NextPage<Props> = (props: Props) => {
+  return (
+    <PageNextJs pathname="/contract-verification" query={ props.query }>
+      <ContractVerification/>
+    </PageNextJs>
+  );
+};
 
 export default Page;
 
-export const getServerSideProps: GetServerSideProps = async() => {
-  return {
-    redirect: {
-      destination: 'https://www.sidrachain.com/tokens',
-      permanent: false,
-    },
-  };
-};
+export { base as getServerSideProps } from 'nextjs/getServerSideProps/main';

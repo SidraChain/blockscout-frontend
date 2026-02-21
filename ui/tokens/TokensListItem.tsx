@@ -3,8 +3,10 @@ import BigNumber from 'bignumber.js';
 import React from 'react';
 
 import type { TokenInfo } from 'types/api/token';
+import type { AggregatedTokenInfo } from 'types/client/multichain-aggregator';
 
 import config from 'configs/app';
+import multichainConfig from 'configs/multichain';
 import getItemIndex from 'lib/getItemIndex';
 import { getTokenTypeName } from 'lib/token/tokenTypes';
 import { Skeleton } from 'toolkit/chakra/skeleton';
@@ -13,9 +15,11 @@ import AddressAddToWallet from 'ui/shared/address/AddressAddToWallet';
 import AddressEntity from 'ui/shared/entities/address/AddressEntity';
 import TokenEntity from 'ui/shared/entities/token/TokenEntity';
 import ListItemMobile from 'ui/shared/ListItemMobile/ListItemMobile';
+import SimpleValue from 'ui/shared/value/SimpleValue';
+import { DEFAULT_ACCURACY_USD } from 'ui/shared/value/utils';
 
 type Props = {
-  token: TokenInfo;
+  token: TokenInfo | AggregatedTokenInfo;
   index: number;
   page: number;
   isLoading?: boolean;
@@ -32,17 +36,30 @@ const TokensListItem = ({
 
   const {
     address_hash: addressHash,
-    filecoin_robust_address: filecoinRobustAddress,
     exchange_rate: exchangeRate,
     type,
     holders_count: holdersCount,
     circulating_market_cap: marketCap,
-    origin_chain_id: originalChainId,
   } = token;
+
+  const originalChainId = 'origin_chain_id' in token ? token.origin_chain_id : undefined;
+  const chainInfos = 'chain_infos' in token ? token.chain_infos : undefined;
 
   const bridgedChainTag = bridgedTokensFeature.isEnabled ?
     bridgedTokensFeature.chains.find(({ id }) => id === originalChainId)?.short_title :
     undefined;
+
+  const filecoinRobustAddress = 'filecoin_robust_address' in token ? token.filecoin_robust_address : undefined;
+
+  const chainInfo = React.useMemo(() => {
+    if (!chainInfos) {
+      return;
+    }
+
+    const chainId = Object.keys(chainInfos)[0];
+    const chain = multichainConfig()?.chains.find((chain) => chain.id === chainId);
+    return chain;
+  }, [ chainInfos ]);
 
   return (
     <ListItemMobile rowGap={ 3 }>
@@ -53,6 +70,7 @@ const TokensListItem = ({
         <GridItem display="flex">
           <TokenEntity
             token={ token }
+            chain={ chainInfo }
             isLoading={ isLoading }
             jointSymbol
             noCopy
@@ -82,15 +100,27 @@ const TokensListItem = ({
       { exchangeRate && (
         <HStack gap={ 3 }>
           <Skeleton loading={ isLoading } textStyle="sm" fontWeight={ 500 }>Price</Skeleton>
-          <Skeleton loading={ isLoading } textStyle="sm" color="text.secondary">
-            <span>${ Number(exchangeRate).toLocaleString(undefined, { minimumSignificantDigits: 4 }) }</span>
-          </Skeleton>
+          <SimpleValue
+            value={ BigNumber(exchangeRate) }
+            loading={ isLoading }
+            accuracy={ 4 }
+            prefix="$"
+            textStyle="sm"
+            color="text.secondary"
+          />
         </HStack>
       ) }
       { marketCap && (
         <HStack gap={ 3 }>
           <Skeleton loading={ isLoading } textStyle="sm" fontWeight={ 500 }>On-chain market cap</Skeleton>
-          <Skeleton loading={ isLoading } textStyle="sm" color="text.secondary"><span>{ BigNumber(marketCap).toFormat() }</span></Skeleton>
+          <SimpleValue
+            value={ BigNumber(marketCap) }
+            loading={ isLoading }
+            prefix="$"
+            accuracy={ DEFAULT_ACCURACY_USD }
+            textStyle="sm"
+            color="text.secondary"
+          />
         </HStack>
       ) }
       <HStack gap={ 3 }>

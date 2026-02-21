@@ -1,4 +1,4 @@
-import { Box } from '@chakra-ui/react';
+import { chakra } from '@chakra-ui/react';
 import type { UseQueryResult } from '@tanstack/react-query';
 import BigNumber from 'bignumber.js';
 import { useRouter } from 'next/router';
@@ -10,8 +10,8 @@ import type { TokenInfo } from 'types/api/token';
 import config from 'configs/app';
 import type { ResourceError } from 'lib/api/resources';
 import useApiQuery from 'lib/api/useApiQuery';
+import { useMultichainContext } from 'lib/contexts/multichain';
 import throwOnResourceLoadError from 'lib/errors/throwOnResourceLoadError';
-import getCurrencyValue from 'lib/getCurrencyValue';
 import useIsMounted from 'lib/hooks/useIsMounted';
 import { TOKEN_COUNTERS } from 'stubs/token';
 import { Link } from 'toolkit/chakra/link';
@@ -21,7 +21,8 @@ import AppActionButton from 'ui/shared/AppActionButton/AppActionButton';
 import useAppActionData from 'ui/shared/AppActionButton/useAppActionData';
 import * as DetailedInfo from 'ui/shared/DetailedInfo/DetailedInfo';
 import DetailedInfoSponsoredItem from 'ui/shared/DetailedInfo/DetailedInfoSponsoredItem';
-import TruncatedValue from 'ui/shared/TruncatedValue';
+import AddressEntity from 'ui/shared/entities/address/AddressEntity';
+import AssetValue from 'ui/shared/value/AssetValue';
 
 import TokenNftMarketplaces from './TokenNftMarketplaces';
 
@@ -35,6 +36,9 @@ const TokenDetails = ({ tokenQuery }: Props) => {
 
   const hash = router.query.hash?.toString();
 
+  const multichainContext = useMultichainContext();
+  const chainSlug = multichainContext?.chain?.slug;
+
   const tokenCountersQuery = useApiQuery('general:token_counters', {
     pathParams: { hash },
     queryOptions: { enabled: Boolean(router.query.hash), placeholderData: TOKEN_COUNTERS },
@@ -43,8 +47,11 @@ const TokenDetails = ({ tokenQuery }: Props) => {
   const appActionData = useAppActionData(hash);
 
   const changeUrlAndScroll = useCallback((tab: TokenTabs) => () => {
+
     router.push(
-      { pathname: '/token/[hash]', query: { hash: hash || '', tab } },
+      chainSlug ?
+        { pathname: '/chain/[chain_slug]/token/[hash]', query: { hash: hash || '', tab, chain_slug: chainSlug } } :
+        { pathname: '/token/[hash]', query: { hash: hash || '', tab } },
       undefined,
       { shallow: true },
     );
@@ -52,7 +59,7 @@ const TokenDetails = ({ tokenQuery }: Props) => {
       duration: 500,
       smooth: true,
     });
-  }, [ hash, router ]);
+  }, [ chainSlug, hash, router ]);
 
   const countersItem = useCallback((item: 'token_holders_count' | 'transfers_count') => {
     const itemValue = tokenCountersQuery.data?.[item];
@@ -85,22 +92,27 @@ const TokenDetails = ({ tokenQuery }: Props) => {
     decimals,
     symbol,
     type,
+    zilliqa,
   } = tokenQuery.data || {};
-
-  let totalSupplyValue;
-  let totalSupplyValueFull;
-
-  if (decimals) {
-    const totalValue = totalSupply ? getCurrencyValue({ value: totalSupply, accuracy: 3, accuracyUsd: 2, exchangeRate, decimals }) : undefined;
-    const totalValueFull = totalSupply ? getCurrencyValue({ value: totalSupply, accuracyUsd: 2, exchangeRate, decimals }) : undefined;
-    totalSupplyValue = totalValue?.valueStr;
-    totalSupplyValueFull = totalValueFull?.valueStr;
-  } else {
-    totalSupplyValue = Number(totalSupply).toLocaleString();
-  }
 
   return (
     <DetailedInfo.Container>
+      { zilliqa?.zrc2_address_hash && (
+        <>
+          <DetailedInfo.ItemLabel
+            hint="ZRC-2 address of the token"
+            isLoading={ tokenQuery.isPlaceholderData }
+          >
+            ZRC-2 Address
+          </DetailedInfo.ItemLabel>
+          <DetailedInfo.ItemValue>
+            <Skeleton loading={ tokenQuery.isPlaceholderData } display="inline-block">
+              <AddressEntity address={{ hash: zilliqa.zrc2_address_hash }} isLoading={ tokenQuery.isPlaceholderData }/>
+            </Skeleton>
+          </DetailedInfo.ItemValue>
+        </>
+      ) }
+
       { exchangeRate && (
         <>
           <DetailedInfo.ItemLabel
@@ -144,16 +156,14 @@ const TokenDetails = ({ tokenQuery }: Props) => {
         wordBreak="break-word"
         whiteSpace="pre-wrap"
       >
-        <Skeleton loading={ tokenQuery.isPlaceholderData } w="100%" display="flex">
-          <TruncatedValue
-            value={ totalSupplyValue || '0' }
-            maxW="80%"
-            flexShrink={ 0 }
-            tooltipContent={ totalSupplyValueFull !== totalSupplyValue ? totalSupplyValueFull : undefined }
-          />
-          <Box flexShrink={ 0 }> </Box>
-          <TruncatedValue value={ symbol || '' }/>
-        </Skeleton>
+        <AssetValue
+          amount={ totalSupply }
+          asset={ <chakra.span maxW="50%" overflow="hidden" textOverflow="ellipsis"> { symbol }</chakra.span> }
+          accuracy={ 3 }
+          decimals={ decimals ?? '0' }
+          loading={ tokenQuery.isPlaceholderData }
+          w="100%"
+        />
       </DetailedInfo.ItemValue>
 
       <DetailedInfo.ItemLabel

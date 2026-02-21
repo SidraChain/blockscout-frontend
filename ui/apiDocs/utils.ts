@@ -25,14 +25,18 @@ export const REST_API_SECTIONS = [
     swagger: {
       url: feature.coreApiSwaggerUrl,
       requestInterceptor: (req: SwaggerRequest) => {
+        if (!config.apis.general) {
+          return req;
+        }
+
         const DEFAULT_SERVER = 'blockscout.com/poa/core';
         const DEFAULT_SERVER_NEW = 'eth.blockscout.com';
 
         if (!req.loadSpec) {
           const newUrl = new URL(
-            req.url
-              .replace(DEFAULT_SERVER, config.apis.general.host)
-              .replace(DEFAULT_SERVER_NEW, config.apis.general.host),
+            req.url.includes(DEFAULT_SERVER) ?
+              req.url.replace(DEFAULT_SERVER, config.apis.general.host) :
+              req.url.replace(DEFAULT_SERVER_NEW, config.apis.general.host),
           );
 
           newUrl.protocol = config.apis.general.protocol + ':';
@@ -77,6 +81,14 @@ export const REST_API_SECTIONS = [
     swagger: {
       url: getMicroserviceSwaggerUrl(config.apis.tac),
       requestInterceptor: microserviceRequestInterceptorFactory(config.apis.tac),
+    },
+  },
+  config.apis.zetachain && {
+    id: 'zetachain-api',
+    title: 'Zetachain CCTX API',
+    swagger: {
+      url: getMicroserviceSwaggerUrl(config.apis.zetachain),
+      requestInterceptor: microserviceRequestInterceptorFactory(config.apis.zetachain),
     },
   },
 ].filter(Boolean);

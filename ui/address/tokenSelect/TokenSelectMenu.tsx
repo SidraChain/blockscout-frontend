@@ -3,28 +3,26 @@ import { sumBy } from 'es-toolkit';
 import React from 'react';
 
 import type { FormattedData } from './types';
-import type { TokenType } from 'types/api/token';
 
 import { getTokenTypeName } from 'lib/token/tokenTypes';
 import { Link } from 'toolkit/chakra/link';
 import { FilterInput } from 'toolkit/components/filters/FilterInput';
+import { thinsp } from 'toolkit/utils/htmlEntities';
 import IconSvg from 'ui/shared/IconSvg';
 
 import type { Sort } from '../utils/tokenUtils';
-import { sortTokenGroups, sortingFns } from '../utils/tokenUtils';
+import { getSortingFn, sortTokenGroups } from '../utils/tokenUtils';
 import TokenSelectItem from './TokenSelectItem';
 
 interface Props {
   searchTerm: string;
-  erc20sort: Sort;
-  erc1155sort: Sort;
-  erc404sort: Sort;
+  getSort: (typeId: string) => Sort;
   filteredData: FormattedData;
   onInputChange: (searchTerm: string) => void;
   onSortClick: (event: React.SyntheticEvent) => void;
 }
 
-const TokenSelectMenu = ({ erc20sort, erc1155sort, erc404sort, filteredData, onInputChange, onSortClick, searchTerm }: Props) => {
+const TokenSelectMenu = ({ getSort, filteredData, onInputChange, onSortClick, searchTerm }: Props) => {
   const hasFilteredResult = sumBy(Object.values(filteredData), ({ items }) => items.length) > 0;
 
   return (
@@ -42,28 +40,15 @@ const TokenSelectMenu = ({ erc20sort, erc1155sort, erc404sort, filteredData, onI
             return null;
           }
 
-          const type = tokenType as TokenType;
-          const arrowTransform =
-            (type === 'ERC-1155' && erc1155sort === 'desc') ||
-            (type === 'ERC-404' && erc404sort === 'desc') ||
-            (type === 'ERC-20' && erc20sort === 'desc') ?
-              'rotate(90deg)' :
-              'rotate(-90deg)';
-          const sortDirection: Sort = (() => {
-            switch (type) {
-              case 'ERC-1155':
-                return erc1155sort;
-              case 'ERC-20':
-                return erc20sort;
-              default:
-                return 'desc';
-            }
-          })();
-          const hasSort =
+          const type = tokenType;
+          const sortDirection = getSort(type);
+          const arrowTransform = sortDirection === 'desc' ? 'rotate(90deg)' : 'rotate(-90deg)';
+          const hasSort = tokenInfo.items.length > 1 && (
             (type === 'ERC-404' && tokenInfo.items.some(item => item.value)) ||
             type === 'ERC-1155' ||
-            (type === 'ERC-20' && tokenInfo.items.some(({ usd }) => usd));
-          const numPrefix = tokenInfo.isOverflow ? '>' : '';
+            (type !== 'ERC-721' && tokenInfo.items.some(({ usd }) => usd))
+          );
+          const numPrefix = tokenInfo.isOverflow ? `>${ thinsp }` : '';
 
           return (
             <Box key={ type }>
@@ -77,7 +62,7 @@ const TokenSelectMenu = ({ erc20sort, erc1155sort, erc404sort, filteredData, onI
                   </Link>
                 ) }
               </Flex>
-              { tokenInfo.items.sort(sortingFns[type](sortDirection)).map((data) =>
+              { tokenInfo.items.sort(getSortingFn(type)(sortDirection)).map((data) =>
                 <TokenSelectItem key={ data.token.address_hash + data.token_id } data={ data }/>) }
             </Box>
           );

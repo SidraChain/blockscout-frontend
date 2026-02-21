@@ -5,19 +5,19 @@ import React from 'react';
 import config from 'configs/app';
 import useApiQuery from 'lib/api/useApiQuery';
 import { useMultichainContext } from 'lib/contexts/multichain';
-import getCurrencyValue from 'lib/getCurrencyValue';
 import getStatsLabelFromTitle from 'lib/stats/getStatsLabelFromTitle';
 import { HOMEPAGE_STATS } from 'stubs/stats';
 import { TXS_STATS, TXS_STATS_MICROSERVICE } from 'stubs/tx';
 import { thinsp } from 'toolkit/utils/htmlEntities';
 import StatsWidget from 'ui/shared/stats/StatsWidget';
+import calculateUsdValue from 'ui/shared/value/calculateUsdValue';
 
 interface Props extends BoxProps {}
 
 const TxsStats = (props: Props) => {
   const multichainContext = useMultichainContext();
 
-  const chainConfig = multichainContext?.chain.config || config;
+  const chainConfig = multichainContext?.chain.app_config || config;
   const isStatsFeatureEnabled = chainConfig.features.stats.isEnabled;
   const rollupFeature = chainConfig.features.rollup;
   const isOptimisticRollup = rollupFeature.isEnabled && rollupFeature.type === 'optimistic';
@@ -62,12 +62,11 @@ const TxsStats = (props: Props) => {
 
   const avgFee = isStatsFeatureEnabled ? txsStatsQuery.data?.average_transactions_fee_24h?.value : txsStatsApiQuery.data?.transaction_fees_avg_24h;
 
-  const txFeeAvg = avgFee ? getCurrencyValue({
-    value: avgFee,
+  const txFeeAvg = avgFee ? calculateUsdValue({
+    amount: avgFee,
     exchangeRate: statsQuery.data?.coin_price,
     // in microservice data, fee values are already divided by 10^decimals
     decimals: isStatsFeatureEnabled ? '0' : String(chainConfig.chain.currency.decimals),
-    accuracyUsd: 2,
   }) : null;
 
   const itemsCount = [
@@ -96,7 +95,11 @@ const TxsStats = (props: Props) => {
           value={ Number(txCount24h).toLocaleString() }
           period="24h"
           isLoading={ isLoading }
-          href={ chainConfig.features.stats.isEnabled ? { pathname: '/stats/[id]', query: { id: 'newTxns' } } : undefined }
+          href={
+            chainConfig.features.stats.isEnabled ?
+              { pathname: '/stats/[id]', query: { id: 'newTxns', ...(multichainContext?.chain.id ? { chain_id: multichainContext.chain.id } : {}) } } :
+              undefined
+          }
         />
       ) }
       { operationalTxns24hArbitrum && (
@@ -138,7 +141,11 @@ const TxsStats = (props: Props) => {
           valuePostfix={ thinsp + chainConfig.chain.currency.symbol }
           period="24h"
           isLoading={ isLoading }
-          href={ chainConfig.features.stats.isEnabled ? { pathname: '/stats/[id]', query: { id: 'txnsFee' } } : undefined }
+          href={
+            chainConfig.features.stats.isEnabled ?
+              { pathname: '/stats/[id]', query: { id: 'txnsFee', ...(multichainContext?.chain.id ? { chain_id: multichainContext.chain.id } : {}) } } :
+              undefined
+          }
         />
       ) }
       { txFeeAvg && (
@@ -146,12 +153,16 @@ const TxsStats = (props: Props) => {
           label={ txsStatsQuery.data?.average_transactions_fee_24h?.title ?
             getStatsLabelFromTitle(txsStatsQuery.data?.average_transactions_fee_24h?.title) :
             'Avg. transaction fee' }
-          value={ txFeeAvg.usd ? txFeeAvg.usd : txFeeAvg.valueStr }
-          valuePrefix={ txFeeAvg.usd ? '$' : undefined }
-          valuePostfix={ txFeeAvg.usd ? undefined : thinsp + chainConfig.chain.currency.symbol }
+          value={ txFeeAvg.usdStr ? txFeeAvg.usdStr : txFeeAvg.valueStr }
+          valuePrefix={ txFeeAvg.usdStr ? '$' : undefined }
+          valuePostfix={ txFeeAvg.usdStr ? undefined : thinsp + chainConfig.chain.currency.symbol }
           period="24h"
           isLoading={ isLoading }
-          href={ chainConfig.features.stats.isEnabled ? { pathname: '/stats/[id]', query: { id: 'averageTxnFee' } } : undefined }
+          href={
+            chainConfig.features.stats.isEnabled ?
+              { pathname: '/stats/[id]', query: { id: 'averageTxnFee', ...(multichainContext?.chain.id ? { chain_id: multichainContext.chain.id } : {}) } } :
+              undefined
+          }
         />
       ) }
     </Box>

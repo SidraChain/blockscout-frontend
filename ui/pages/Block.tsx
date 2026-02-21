@@ -46,6 +46,8 @@ const TAB_LIST_PROPS = {
 };
 const TABS_HEIGHT = 88;
 
+const beaconChainFeature = config.features.beaconChain;
+
 const BlockPageContent = () => {
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -91,7 +93,7 @@ const BlockPageContent = () => {
         </>
       ),
     },
-    blockQuery.data?.internal_transactions_count ? {
+    {
       id: 'internal_txs',
       title: 'Internal txns',
       component: (
@@ -100,7 +102,7 @@ const BlockPageContent = () => {
           <BlockInternalTxs query={ blockInternalTxsQuery } top={ hasPagination ? TABS_HEIGHT : 0 }/>
         </>
       ),
-    } : null,
+    },
     config.features.dataAvailability.isEnabled && blockQuery.data?.blob_transaction_count ?
       {
         id: 'blob_txs',
@@ -109,7 +111,7 @@ const BlockPageContent = () => {
           <TxsWithFrontendSorting query={ blockBlobTxsQuery } showBlockInfo={ false }/>
         ),
       } : null,
-    config.features.beaconChain.isEnabled && Boolean(blockQuery.data?.beacon_deposits_count) ?
+    beaconChainFeature.isEnabled && !beaconChainFeature.withdrawalsOnly && Boolean(blockQuery.data?.beacon_deposits_count) ?
       {
         id: 'deposits',
         title: 'Deposits',
@@ -148,7 +150,7 @@ const BlockPageContent = () => {
   throwOnAbsentParamError(heightOrHash);
 
   if (blockQuery.isError) {
-    if (!blockQuery.isDegradedData && blockQuery.error.status === 404 && !heightOrHash.startsWith('0x')) {
+    if (!blockQuery.isDegradedData && blockQuery.error.status === 404 && !heightOrHash.startsWith('0x') && blockQuery.isFutureBlock) {
       const url = routeParams({ pathname: '/block/countdown/[height]', query: { height: heightOrHash } }, multichainContext);
       router.push(url, undefined, { shallow: true });
       return null;

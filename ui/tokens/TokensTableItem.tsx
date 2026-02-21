@@ -3,8 +3,10 @@ import BigNumber from 'bignumber.js';
 import React from 'react';
 
 import type { TokenInfo } from 'types/api/token';
+import type { AggregatedTokenInfo } from 'types/client/multichain-aggregator';
 
 import config from 'configs/app';
+import multichainConfig from 'configs/multichain';
 import getItemIndex from 'lib/getItemIndex';
 import { getTokenTypeName } from 'lib/token/tokenTypes';
 import { Skeleton } from 'toolkit/chakra/skeleton';
@@ -14,10 +16,11 @@ import AddressAddToWallet from 'ui/shared/address/AddressAddToWallet';
 import type { EntityProps as AddressEntityProps } from 'ui/shared/entities/address/AddressEntity';
 import AddressEntity from 'ui/shared/entities/address/AddressEntity';
 import TokenEntity from 'ui/shared/entities/token/TokenEntity';
-import TruncatedValue from 'ui/shared/TruncatedValue';
+import SimpleValue from 'ui/shared/value/SimpleValue';
+import { DEFAULT_ACCURACY_USD } from 'ui/shared/value/utils';
 
 type Props = {
-  token: TokenInfo;
+  token: TokenInfo | AggregatedTokenInfo;
   index: number;
   page: number;
   isLoading?: boolean;
@@ -34,13 +37,15 @@ const TokensTableItem = ({
 
   const {
     address_hash: addressHash,
-    filecoin_robust_address: filecoinRobustAddress,
     exchange_rate: exchangeRate,
     type,
     holders_count: holdersCount,
     circulating_market_cap: marketCap,
-    origin_chain_id: originalChainId,
   } = token;
+
+  const filecoinRobustAddress = 'filecoin_robust_address' in token ? token.filecoin_robust_address : undefined;
+  const originalChainId = 'origin_chain_id' in token ? token.origin_chain_id : undefined;
+  const chainInfos = 'chain_infos' in token ? token.chain_infos : undefined;
 
   const bridgedChainTag = bridgedTokensFeature.isEnabled ?
     bridgedTokensFeature.chains.find(({ id }) => id === originalChainId)?.short_title :
@@ -58,6 +63,16 @@ const TokensTableItem = ({
     implementations: null,
   };
 
+  const chainInfo = React.useMemo(() => {
+    if (!chainInfos) {
+      return;
+    }
+
+    const chainId = Object.keys(chainInfos)[0];
+    const chain = multichainConfig()?.chains.find((chain) => chain.id === chainId);
+    return chain;
+  }, [ chainInfos ]);
+
   return (
     <TableRow className="group">
       <TableCell>
@@ -74,6 +89,7 @@ const TokensTableItem = ({
           <Flex overflow="hidden" flexDir="column" rowGap={ 2 }>
             <TokenEntity
               token={ token }
+              chain={ chainInfo }
               isLoading={ isLoading }
               jointSymbol
               noCopy
@@ -105,24 +121,28 @@ const TokensTableItem = ({
         </Flex>
       </TableCell>
       <TableCell isNumeric>
-        <TruncatedValue
-          value={ exchangeRate ? `$${ Number(exchangeRate).toLocaleString(undefined, { minimumSignificantDigits: 4 }) }` : '' }
-          isLoading={ isLoading }
-          maxW="100%"
-        />
+        { exchangeRate ? (
+          <SimpleValue
+            value={ BigNumber(exchangeRate) }
+            accuracy={ 4 }
+            loading={ isLoading }
+            prefix="$"
+          />
+        ) : null }
       </TableCell>
-      <TableCell isNumeric maxWidth="300px" width="300px">
-        <TruncatedValue
-          value={ marketCap ? `$${ BigNumber(marketCap).toFormat() }` : '' }
-          isLoading={ isLoading }
-          maxW="100%"
-        />
+      <TableCell isNumeric>
+        { marketCap && (
+          <SimpleValue
+            value={ BigNumber(marketCap) }
+            loading={ isLoading }
+            prefix="$"
+            accuracy={ DEFAULT_ACCURACY_USD }
+          />
+        ) }
       </TableCell>
       <TableCell isNumeric>
         <Skeleton
           loading={ isLoading }
-          textStyle="sm"
-          fontWeight={ 500 }
           display="inline-block"
         >
           { Number(holdersCount).toLocaleString() }
