@@ -1,10 +1,14 @@
-import type { NextPage } from 'next';
-import { redirect } from 'next/navigation';
+import type { GetServerSideProps, NextPage } from 'next';
 
-const Page: NextPage = () => {
-  redirect('https://www.sidrachain.com/tokens');
-};
+const Page: NextPage = () => null;
 
 export default Page;
 
-export { base as getServerSideProps } from 'nextjs/getServerSideProps/main';
+export const getServerSideProps: GetServerSideProps = async() => {
+  return {
+    redirect: {
+      destination: 'https://www.sidrachain.com/tokens',
+      permanent: false,
+    },
+  };
+};
